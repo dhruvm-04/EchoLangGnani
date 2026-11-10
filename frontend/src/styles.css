@@ -48,3 +48,35 @@
 .no-matches .new-search{width:100%;justify-content:center;min-height:50px;margin-top:12px;padding:10px 16px;border:1px solid var(--line);border-radius:12px;background:var(--button);color:var(--button-ink);font-weight:700}
 .listing-details .listing-review-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px}.listing-review-row dt,.listing-review-row dd{grid-column:1}.listing-review-row .field-change{grid-column:2;grid-row:1 / span 2;align-self:center;min-height:44px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--accent);font-size:12px;font-weight:700}.listing-review-row .field-change:hover:not(:disabled){border-color:var(--accent);color:var(--ink)}
 @media(max-width:540px){.voice-panel.is-followup:not(.text-first) .voice-center{grid-template-columns:74px minmax(0,1fr);column-gap:11px;padding:13px 21px 9px}.is-followup:not(.text-first) .orb-frame{width:70px;height:70px}.is-followup:not(.text-first) .record-button{width:57px;height:57px}.is-followup:not(.text-first) .guidance{font-size:17px}.quick-input{padding:0 21px 13px}}
+
+/* A shared, low-contrast material texture for the site and pitch deck. */
+:root{
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3' stitchTiles='stitch' seed='8'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E");
+  --texture-glow:rgba(197,146,191,.13);
+  --texture-thread:rgba(232,197,226,.025);
+  --surface-sheen:rgba(255,255,255,.065);
+}
+:root[data-theme=light]{
+  --texture-glow:rgba(155,109,150,.13);
+  --texture-thread:rgba(96,70,88,.035);
+  --surface-sheen:rgba(255,255,255,.8);
+}
+.app-shell{
+  background-image:var(--grain),radial-gradient(ellipse at 84% 35%,var(--texture-glow),transparent 43%),repeating-linear-gradient(135deg,transparent 0 47px,var(--texture-thread) 47px 48px),linear-gradient(145deg,var(--bg),var(--bg2));
+  background-size:180px 180px,auto,auto,auto;
+}
+.voice-panel{
+  background:var(--grain),linear-gradient(145deg,var(--surface-sheen),transparent 47%),radial-gradient(circle at 90% 0%,var(--texture-glow),transparent 55%),var(--panel);
+  background-size:180px 180px,auto,auto,auto;
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.language-grid button,.operator-card,.metric-grid>div,.results,.offer-actions{
+  background-image:var(--grain),linear-gradient(155deg,var(--surface-sheen),transparent 60%);
+  background-size:180px 180px,auto;
+  background-color:var(--panel);
+}
+.record-button,.splash-emblem{
+  background-image:repeating-radial-gradient(circle at 49% 53%,transparent 0 15px,rgba(75,43,75,.045) 16px 17px,transparent 18px 30px),radial-gradient(circle at 35% 27%,#f5e8f2 0%,#d8b7d5 42%,#9d819e 100%);
+}
+.is-recording .record-button{background-image:repeating-radial-gradient(circle at 49% 53%,transparent 0 15px,rgba(75,43,75,.045) 16px 17px,transparent 18px 30px),radial-gradient(circle at 35% 27%,#fae2e2,#e4a7b0 65%,#b67b8b)}
+.splash{background-image:var(--grain),radial-gradient(circle at 50% 47%,rgba(197,146,191,.13),transparent 52%);background-size:180px 180px,auto}

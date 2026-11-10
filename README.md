@@ -19,7 +19,7 @@ To test the production image locally, run `docker build -t echolang .`, then `do
 
 ### Show EchoLang at `/echolang/` on a Vercel portfolio
 
-Keep the portfolio domain pointed at Vercel. In the **portfolio project's** `vercel.json`, merge these rules with any existing redirects or rewrites. Replace `YOUR-RENDER-SERVICE.onrender.com` with the actual Render hostname, then redeploy the portfolio:
+Keep the portfolio domain pointed at Vercel. In the **portfolio project's** `vercel.json`, merge these rules with any existing redirects or rewrites, then redeploy the portfolio. The portfolio's catchall rewrite must come last. Remove `"trailingSlash": false` if it is present so it does not undo the `/echolang/` redirect:
 
 ```json
 {
@@ -27,7 +27,9 @@ Keep the portfolio domain pointed at Vercel. In the **portfolio project's** `ver
     { "source": "/echolang", "destination": "/echolang/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/echolang/:path*", "destination": "https://YOUR-RENDER-SERVICE.onrender.com/:path*" }
+    { "source": "/echolang/", "destination": "https://echolanggnani.onrender.com/" },
+    { "source": "/echolang/presentation", "destination": "https://echolanggnani.onrender.com/presentation.html" },
+    { "source": "/echolang/:path*", "destination": "https://echolanggnani.onrender.com/:path*" }
   ]
 }
 ```

@@ -29,6 +29,7 @@
       --button: #f4f0e8;
       --button-ink: #24211f;
       --shadow: 0 30px 95px rgba(0,0,0,.22);
+      --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3' stitchTiles='stitch' seed='8'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E");
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -226,6 +227,20 @@
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+    /* Match the site's grain, faint diagonal thread and softly lit surfaces. */
+    .deck {
+      background-image: var(--grain), radial-gradient(ellipse at 83% 37%, rgba(197,146,191,.13), transparent 43%), repeating-linear-gradient(135deg, transparent 0 47px, rgba(232,197,226,.025) 47px 48px), linear-gradient(145deg,var(--bg),#1b1a1a);
+      background-size: 180px 180px, auto, auto, auto;
+    }
+    .gap-visual,.quote-card,.demo-step,.flow-node,.path-card,.voice-return,.hero-tag {
+      background-image: var(--grain), linear-gradient(145deg,rgba(255,255,255,.065),transparent 52%), radial-gradient(circle at 95% 5%,var(--accent-wash),transparent 68%);
+      background-size: 180px 180px, auto, auto;
+      background-color: var(--panel);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .cover-orb,.signal-orb {
+      background-image: repeating-radial-gradient(circle at 49% 53%,transparent 0 15px,rgba(75,43,75,.045) 16px 17px,transparent 18px 30px),radial-gradient(circle at 30% 25%,#f7e9f3,#d7b6d4 43%,#9a799a 100%);
     }
     @media print {
       :root { color-scheme: light; }
