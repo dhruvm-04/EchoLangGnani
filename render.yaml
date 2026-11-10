@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: echolang-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: GNANI_API_KEY
+        sync: false
+      - key: ECHOLANG_LLM_API_KEY
+        sync: false
+      - key: ECHOLANG_LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: ECHOLANG_LLM_MODEL
+        value: openai/gpt-oss-120b
+      - key: ECHOLANG_DB_PATH
+        value: /tmp/echolang.sqlite3

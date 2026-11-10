@@ -11,7 +11,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .adapters import GnaniClient, ServiceError
@@ -32,6 +33,8 @@ app.add_middleware(
 app.state.gnani = GnaniClient()
 app.state.reasoner = MultilingualReasoner()
 app.state.store = DirectoryStore()
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+PRESENTATION_FILE = Path(__file__).resolve().parents[2] / "presentation.html"
 
 
 @app.exception_handler(ServiceError)
@@ -567,3 +570,23 @@ async def admin_status(provider_id: str, update: StatusUpdate, x_admin_key: str 
     if not provider:
         raise ServiceError("Listing not found.", 404, "listing_not_found")
     return provider
+
+
+# Serve the production frontend from the same origin as the API.
+if (FRONTEND_DIST / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+
+@app.get("/", include_in_schema=False)
+async def frontend():
+    index = FRONTEND_DIST / "index.html"
+    if not index.is_file():
+        raise HTTPException(status_code=503, detail="Frontend is not built. Run npm run build in frontend.")
+    return FileResponse(index)
+
+
+@app.get("/presentation.html", include_in_schema=False)
+async def presentation():
+    if not PRESENTATION_FILE.is_file():
+        raise HTTPException(status_code=404, detail="Presentation is unavailable.")
+    return FileResponse(PRESENTATION_FILE, media_type="text/html")

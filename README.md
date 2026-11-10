@@ -2,6 +2,21 @@
 
 EchoLang is a voice-first local services directory. Customers describe the help they need and hear matching providers. Providers answer spoken questions to create an entry, review it before publication, and later update, pause, or delete it. Directory entries and drafts live in a local SQLite database. The app supports Bengali, English, Gujarati, Hindi, Kannada, Malayalam, Marathi, Punjabi, Tamil, and Telugu; choosing a language changes both the interface and the speech flow.
 
+## Deploy on Render (free web service)
+
+The root `render.yaml` deploys a single Docker web service. Its build compiles the React app, then FastAPI serves the app and `/api` from one HTTPS origin. The presentation is at `/presentation.html`.
+
+1. Push this repository to GitHub. Keep `backend/.env` out of Git; it is ignored, and the Docker build excludes it.
+2. In Render, select **New → Blueprint**, connect the GitHub repository, and approve the `render.yaml` Blueprint.
+3. Enter `GNANI_API_KEY` and `ECHOLANG_LLM_API_KEY` when Render requests the two secret values. Use the Gnani key with STT/TTS access and your Groq API key. The Blueprint already sets Groq's base URL and `openai/gpt-oss-120b` model.
+4. Wait for the Docker build and deploy. Open the assigned `https://…onrender.com` URL. Check `/api/health`: `gnaniKeyConfigured` and `reasoningConfigured` should both be `true`. Open the app on a phone and allow microphone access when prompted.
+
+If you created the service before adding the Blueprint secrets, enter both keys under **Environment** in the Render dashboard and redeploy. Never put keys in frontend variables or Git. For live logs and failures, use the Render service's **Logs** tab. To protect a pilot with real listings, set `ECHOLANG_REQUIRE_APPROVAL=1` and a strong `ECHOLANG_ADMIN_KEY` in Render; the operator view is at `/?operator=1`.
+
+**Free-tier data limit:** This deployment keeps SQLite at `/tmp/echolang.sqlite3`. Render's free web service sleeps after inactivity and its local files are lost on spin-down, restart, or redeploy. Provider listings, drafts, reports, and metrics therefore reset. Create a fresh demo listing after each wake, or use a paid persistent disk or an external database before collecting real provider data. A free web service also has a cold-start delay. The public demo can consume Gnani and Groq credits; monitor both dashboards and limit who receives the URL if needed. Do not treat this setup as durable storage for real providers.
+
+To test the production image locally, run `docker build -t echolang .`, then `docker run --rm -p 10000:10000 -e GNANI_API_KEY=... -e ECHOLANG_LLM_API_KEY=... -e ECHOLANG_LLM_BASE_URL=https://api.groq.com/openai/v1 -e ECHOLANG_LLM_MODEL=openai/gpt-oss-120b echolang`. Open `http://localhost:10000` for a basic check. Browser microphone capture on a phone requires the deployed HTTPS address.
+
 ## Run locally
 
 Use Python 3.11 or 3.12 and Node.js 20 or newer. From this folder, in PowerShell:
