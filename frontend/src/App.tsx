@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Check, Headphones, MapPin, Mic, Moon, Pause, Play, RotateCcw, Search, Sun, X, BriefcaseBusiness, Phone, Pencil, ShieldCheck, Globe2 } from 'lucide-react'
 import { startRecording, type Recording } from './audio'
 import { isLanguageCode, languages, ui, type CopyKey, type LanguageCode } from './i18n'
+import { apiFetch, appHome } from './paths'
 
 type Language = { code: string; name: string }
 type Conversation = { phase: string; category: string | null; location: string | null; language: string | null; availability: string | null; preferred_language: string | null; result_index: number }
@@ -82,7 +83,7 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [showSplash])
   useEffect(() => {
-    fetch('/api/config').then(async response => {
+    apiFetch('/api/config').then(async response => {
       if (!response.ok) throw new Error('offline')
       const value: Config = await response.json()
       setConfig(value)
@@ -91,7 +92,7 @@ function App() {
   }, [])
   useEffect(() => {
     if (!ownerToken) return
-    fetch('/api/providers/me', { headers: { Authorization: `Bearer ${ownerToken}` } })
+    apiFetch('/api/providers/me', { headers: { Authorization: `Bearer ${ownerToken}` } })
       .then(response => {
         if (response.status === 401) throw new Error('invalid_token')
         if (!response.ok) throw new Error('offline')
@@ -107,7 +108,7 @@ function App() {
     if (showLanguagePicker) return
     const draftId = localStorage.getItem('echolang-provider-draft')
     if (!draftId) return
-    fetch(`/api/providers/drafts/${encodeURIComponent(draftId)}?selected_language=${encodeURIComponent(language)}`)
+    apiFetch(`/api/providers/drafts/${encodeURIComponent(draftId)}?selected_language=${encodeURIComponent(language)}`)
       .then(response => {
         if (response.status === 404) throw new Error('expired_draft')
         if (!response.ok) throw new Error('offline')
@@ -130,7 +131,7 @@ function App() {
   async function startProvider() {
     setBusy(true); setError(''); setProviderTurn(null); setEditProposal(null)
     try {
-      const response = await fetch('/api/providers/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language }) })
+      const response = await apiFetch('/api/providers/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language }) })
       const data = await response.json()
       if (!response.ok) { setError(friendlyError(language, data.error)); return }
       setProviderTurn(data as ProviderTurn); localStorage.setItem('echolang-provider-draft', data.draftId); playReply(data)
@@ -147,7 +148,7 @@ function App() {
       form.append('selected_language', language)
       if (typeof input === 'string') form.append(isControl ? 'control' : 'text', input)
       else form.append('audio', input, 'answer.wav')
-      const response = await fetch('/api/providers/turn', { method: 'POST', body: form })
+      const response = await apiFetch('/api/providers/turn', { method: 'POST', body: form })
       const data = await response.json()
       if (!response.ok) { setError(friendlyError(language, data.error)); return }
       const result = data as ProviderTurn
@@ -171,7 +172,7 @@ function App() {
       form.append('selected_language', language)
       if (typeof input === 'string') form.append('text', input)
       else form.append('audio', input, 'edit.wav')
-      const response = await fetch('/api/providers/edit/prepare', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}` }, body: form })
+      const response = await apiFetch('/api/providers/edit/prepare', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}` }, body: form })
       const data = await response.json()
       if (!response.ok) { setError(friendlyError(language, data.error)); return }
       setEditProposal(data as EditProposal); setHeardText(data.transcript); playReply(data)
@@ -183,7 +184,7 @@ function App() {
     if (!editProposal?.field || !editProposal.value) return
     setBusy(true); setError('')
     try {
-      const response = await fetch('/api/providers/edit/confirm', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ field: editProposal.field, value: editProposal.value, language }) })
+      const response = await apiFetch('/api/providers/edit/confirm', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ field: editProposal.field, value: editProposal.value, language }) })
       const data = await response.json()
       if (!response.ok) { setError(friendlyError(language, data.error)); return }
       setMyListing(data.provider); setEditProposal(null); playReply(data)
@@ -200,7 +201,7 @@ function App() {
       form.append('selected_language', language)
       if (typeof input === 'string') form.append('text', input)
       else form.append('audio', input, 'answer.wav')
-      const response = await fetch('/api/providers/edit/answer', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}` }, body: form })
+      const response = await apiFetch('/api/providers/edit/answer', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}` }, body: form })
       const data = await response.json()
       if (!response.ok) { setError(friendlyError(language, data.error)); return }
       setHeardText(data.transcript); playReply(data)
@@ -219,7 +220,7 @@ function App() {
       form.append('state', JSON.stringify(conversation))
       form.append('selected_language', language)
       if (placeOverride.trim()) form.append('location_override', placeOverride.trim())
-      const response = await fetch('/api/turn', { method: 'POST', body: form })
+      const response = await apiFetch('/api/turn', { method: 'POST', body: form })
       const data = await response.json()
       if (!response.ok) {
         setError(friendlyError(language, data.error)); return
@@ -285,7 +286,7 @@ function App() {
 
   async function reportProvider(provider: Provider) {
     try {
-      const response = await fetch(`/api/directory/${provider.id}/report`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'Wrong number or unavailable' }) })
+      const response = await apiFetch(`/api/directory/${provider.id}/report`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'Wrong number or unavailable' }) })
       if (!response.ok) throw new Error('report failed')
       setNotice(ui(language, 'noticeReport'))
     } catch { setError(ui(language, 'errorReport')) }
@@ -294,7 +295,7 @@ function App() {
   async function changeListingStatus(status: 'published' | 'paused') {
     setBusy(true); setError(''); setNotice('')
     try {
-      const response = await fetch('/api/providers/me/status', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
+      const response = await apiFetch('/api/providers/me/status', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
       const data = await response.json()
       if (!response.ok) { setError(friendlyError(language, data.error)); return }
       setMyListing(data)
@@ -307,7 +308,7 @@ function App() {
     if (!window.confirm(ui(language, 'confirmDelete'))) return
     setBusy(true); setError('')
     try {
-      const response = await fetch('/api/providers/me/delete', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation: 'delete' }) })
+      const response = await apiFetch('/api/providers/me/delete', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation: 'delete' }) })
       if (!response.ok) { setError(ui(language, 'errorDelete')); return }
       localStorage.removeItem('echolang-owner-token'); setOwnerToken(''); setMyListing(null); setProviderTurn(null); setEditProposal(null)
       setNotice(ui(language, 'noticeDeleted'))
@@ -358,7 +359,7 @@ function App() {
   </div>
 
   if (showLanguagePicker) return <div className="app-shell language-welcome">
-    <header className="topbar"><a className="brand" href="/" aria-label="EchoLang home"><span className="brand-mark" aria-hidden="true"><span /></span><span>echo<span className="brand-light">lang.</span></span></a></header>
+    <header className="topbar"><a className="brand" href={appHome} aria-label="EchoLang home"><span className="brand-mark" aria-hidden="true"><span /></span><span>echo<span className="brand-light">lang.</span></span></a></header>
     <main className="language-page">
       <div className="language-intro"><Globe2 size={30} aria-hidden="true" /><p className="eyebrow">ECHOLANG</p><h1>{ui(language, 'languageTitle')}</h1><p>{ui(language, 'languageIntro')}</p><small>{ui(language, 'languageHint')}</small></div>
       <div className="language-grid" role="group" aria-label="Choose the language for the app and voice">
@@ -372,7 +373,7 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <a className="brand" href="/" aria-label="EchoLang home" onClick={event => { event.preventDefault(); reset() }}>
+      <a className="brand" href={appHome} aria-label="EchoLang home" onClick={event => { event.preventDefault(); reset() }}>
         <span className="brand-mark" aria-hidden="true"><span /></span><span>echo<span className="brand-light">lang.</span></span>
       </a>
       <div className="top-actions">
@@ -432,7 +433,7 @@ function App() {
           {(turn.matches || []).map((provider, index) => <article className={`provider-card ${index === turn.activeIndex ? 'active' : ''}`} id={`provider-${index}`} key={provider.id} aria-current={index === turn.activeIndex ? 'true' : undefined}>
             <strong>{provider.name}</strong><span>{provider.services.join(' · ')}</span>
             <small>{provider.area} · {provider.delivery}{provider.hours ? ` · ${provider.hours}` : ''}{provider.languages ? ` · ${provider.languages}` : ''}</small>
-            <div><a href={`tel:${provider.phone}`} onClick={() => { void fetch(`/api/directory/${provider.id}/contact`, { method: 'POST', keepalive: true }).catch(() => {}) }}><Phone size={16} /> {ui(language, 'callProvider')}</a><button type="button" onClick={() => void reportProvider(provider)}>{ui(language, 'reportIssue')}</button></div>
+            <div><a href={`tel:${provider.phone}`} onClick={() => { void apiFetch(`/api/directory/${provider.id}/contact`, { method: 'POST', keepalive: true }).catch(() => {}) }}><Phone size={16} /> {ui(language, 'callProvider')}</a><button type="button" onClick={() => void reportProvider(provider)}>{ui(language, 'reportIssue')}</button></div>
           </article>)}
           {turn.matches?.length > 0 && <div className="browse-actions"><button type="button" disabled={busy || (turn.activeIndex ?? 0) <= 0} onClick={() => void sendTurn('previous', true)}>{ui(language, 'previous')}</button><button type="button" disabled={busy} onClick={() => void sendTurn('repeat', true)}>{ui(language, 'repeat')}</button><button type="button" disabled={busy || (turn.activeIndex ?? 0) >= turn.matches.length - 1} onClick={() => void sendTurn('next', true)}>{ui(language, 'next')}</button></div>}
           <button className="new-search" type="button" onClick={reset}><RotateCcw size={16} /> {ui(language, 'newSearch')}</button>
@@ -505,7 +506,7 @@ function OperatorPanel() {
     try {
       const headers = { 'X-Admin-Key': key }
       const [pendingResponse, reportsResponse, metricsResponse] = await Promise.all([
-        fetch('/api/admin/pending', { headers }), fetch('/api/admin/reports', { headers }), fetch('/api/admin/metrics', { headers }),
+        apiFetch('/api/admin/pending', { headers }), apiFetch('/api/admin/reports', { headers }), apiFetch('/api/admin/metrics', { headers }),
       ])
       if (!pendingResponse.ok || !reportsResponse.ok || !metricsResponse.ok) { setError('Check the operator key and try again.'); return }
       setProviders((await pendingResponse.json()).providers)
@@ -519,7 +520,7 @@ function OperatorPanel() {
   async function decideStatus(provider: Provider, status: 'published' | 'rejected') {
     setBusy(true); setError('')
     try {
-      const response = await fetch(`/api/admin/providers/${provider.id}/status`, { method: 'POST', headers: { 'X-Admin-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
+      const response = await apiFetch(`/api/admin/providers/${provider.id}/status`, { method: 'POST', headers: { 'X-Admin-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
       if (!response.ok) { setError('Could not update this entry.'); return }
       setProviders(items => items.filter(item => item.id !== provider.id))
       setNotice(status === 'published' ? 'Entry approved.' : 'Entry rejected.')
@@ -530,7 +531,7 @@ function OperatorPanel() {
   async function resolveReport(report: Report, resolution: 'checked' | 'hidden') {
     setBusy(true); setError('')
     try {
-      const response = await fetch(`/api/admin/reports/${report.id}/resolve`, { method: 'POST', headers: { 'X-Admin-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ resolution }) })
+      const response = await apiFetch(`/api/admin/reports/${report.id}/resolve`, { method: 'POST', headers: { 'X-Admin-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ resolution }) })
       if (!response.ok) { setError('Could not resolve this report.'); return }
       setReports(items => items.filter(item => item.id !== report.id))
       setNotice(resolution === 'hidden' ? 'Listing hidden and report resolved.' : 'Report marked as checked.')
@@ -542,10 +543,10 @@ function OperatorPanel() {
     if (!window.confirm('Only continue after you have called the listed number and confirmed the provider wants access on a new device. This will revoke access on the old device.')) return
     setBusy(true); setError(''); setRecoveryLink('')
     try {
-      const response = await fetch(`/api/admin/providers/${providerId}/recover`, { method: 'POST', headers: { 'X-Admin-Key': key } })
+      const response = await apiFetch(`/api/admin/providers/${providerId}/recover`, { method: 'POST', headers: { 'X-Admin-Key': key } })
       if (!response.ok) { setError('Could not create a recovery link.'); return }
       const data: { ownerToken: string } = await response.json()
-      setRecoveryLink(`${window.location.origin}/#recover=${encodeURIComponent(data.ownerToken)}`)
+      setRecoveryLink(`${window.location.origin}${appHome}#recover=${encodeURIComponent(data.ownerToken)}`)
     } catch { setError('The directory is offline.') }
     finally { setBusy(false) }
   }
@@ -553,14 +554,14 @@ function OperatorPanel() {
   async function lookupProvider() {
     setBusy(true); setError(''); setLookupResults([])
     try {
-      const response = await fetch(`/api/admin/providers/by-phone?phone=${encodeURIComponent(lookupPhone)}`, { headers: { 'X-Admin-Key': key } })
+      const response = await apiFetch(`/api/admin/providers/by-phone?phone=${encodeURIComponent(lookupPhone)}`, { headers: { 'X-Admin-Key': key } })
       if (!response.ok) { setError('Check the operator key and phone number.'); return }
       setLookupResults((await response.json()).providers)
     } catch { setError('The directory is offline.') }
     finally { setBusy(false) }
   }
 
-  return <div className="app-shell"><header className="topbar"><a className="brand" href="/">echolang.</a><span className="status-pill">Directory review</span></header>
+  return <div className="app-shell"><header className="topbar"><a className="brand" href={appHome}>echolang.</a><span className="status-pill">Directory review</span></header>
     <main className="operator-page"><h1>Directory <em>review.</em></h1><p>Review new entries and customer reports.</p>
       <form onSubmit={event => { event.preventDefault(); void load() }}><label htmlFor="operator-key">Operator key</label><div><input id="operator-key" type="password" value={key} onChange={event => setKey(event.target.value)} autoComplete="off" /><button type="submit" disabled={!key || busy}>Load entries</button></div></form>
       {error && <p role="alert">{error}</p>}

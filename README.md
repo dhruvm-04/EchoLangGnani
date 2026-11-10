@@ -17,6 +17,23 @@ If you created the service before adding the Blueprint secrets, enter both keys 
 
 To test the production image locally, run `docker build -t echolang .`, then `docker run --rm -p 10000:10000 -e GNANI_API_KEY=... -e ECHOLANG_LLM_API_KEY=... -e ECHOLANG_LLM_BASE_URL=https://api.groq.com/openai/v1 -e ECHOLANG_LLM_MODEL=openai/gpt-oss-120b echolang`. Open `http://localhost:10000` for a basic check. Browser microphone capture on a phone requires the deployed HTTPS address.
 
+### Show EchoLang at `/echolang/` on a Vercel portfolio
+
+Keep the portfolio domain pointed at Vercel. In the **portfolio project's** `vercel.json`, merge these rules with any existing redirects or rewrites. Replace `YOUR-RENDER-SERVICE.onrender.com` with the actual Render hostname, then redeploy the portfolio:
+
+```json
+{
+  "redirects": [
+    { "source": "/echolang", "destination": "/echolang/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/echolang/:path*", "destination": "https://YOUR-RENDER-SERVICE.onrender.com/:path*" }
+  ]
+}
+```
+
+The trailing slash matters for relative frontend assets. The app uses relative asset, API, and home links, so Vercel can forward `/echolang/`, `/echolang/assets/…`, and `/echolang/api/…` to the same Render service. No DNS change or Render custom domain is needed for this path. Test `/echolang/` and `/echolang/api/health` on the portfolio domain after the portfolio deployment. The site's current root-to-`www` redirect may make the visible URL `www.dhruvmaheshwari.in/echolang/`.
+
 ## Run locally
 
 Use Python 3.11 or 3.12 and Node.js 20 or newer. From this folder, in PowerShell:
