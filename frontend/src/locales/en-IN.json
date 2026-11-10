@@ -45,6 +45,7 @@
   "resultCount": "Result {index} of {total}. Say next, previous, or repeat.",
   "noMatches": "No entries match yet. Say another service or area, or invite a provider to join.",
   "callProvider": "Call provider",
+  "demoNoCall": "Demo · no call",
   "reportIssue": "Report issue",
   "previous": "Previous",
   "repeat": "Repeat",

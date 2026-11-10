@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from .adapters import GnaniClient, ServiceError
 from .core import LANGUAGES, State, confirmation, decide, state_dict
 from .directory import DirectoryStore, FIELDS, QUESTIONS, REQUIRED, clean, phone_digits
+from .demo_seed import seed_demo
 from .reasoning import MultilingualReasoner
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
@@ -33,8 +34,11 @@ app.add_middleware(
 app.state.gnani = GnaniClient()
 app.state.reasoner = MultilingualReasoner()
 app.state.store = DirectoryStore()
+if os.getenv("ECHOLANG_SEED_DEMO") == "1":
+    seed_demo(app.state.store)
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 PRESENTATION_FILE = Path(__file__).resolve().parents[2] / "presentation.html"
+LOGO_FILE = Path(__file__).resolve().parents[2] / "echolang-logo.svg"
 
 
 @app.exception_handler(ServiceError)
@@ -85,20 +89,25 @@ def _result_reply(matches: list[dict], state: State, action: str = "initial") ->
         state.result_index = max(state.result_index - 1, 0)
     state.result_index = min(state.result_index, len(matches) - 1)
     provider = matches[state.result_index]
+    is_demo = provider["id"].startswith("demo-")
     intro = (f"I found {len(matches)} local providers. " if action == "initial" else
              "That is the last provider. " if action == "next" and state.result_index == len(matches) - 1 and len(matches) > 1 else
              "That is the first provider. " if action == "previous" and state.result_index == 0 else "")
     if action == "call":
-        intro = f"Tap Call provider to contact {provider['name']}. "
+        intro = ("This is a sample listing without a callable number. " if is_demo else
+                 f"Tap Call provider to contact {provider['name']}. ")
     details = [f"Provider {state.result_index + 1} of {len(matches)}: {provider['name']}.",
                f"Offers {', '.join(provider['services'])} in {provider['area']}.", provider["delivery"] + "."]
+    if is_demo:
+        details.insert(0, "Sample listing only.")
     if provider["hours"]:
         details.append(f"Hours: {provider['hours']}.")
     if provider["languages"]:
         details.append(f"Languages: {provider['languages']}.")
     if provider["price"]:
         details.append(f"Price: {provider['price']}.")
-    details.append("Say next, previous, or repeat. Tap Call provider to contact them.")
+    details.append("Say next, previous, or repeat. " +
+                   ("This number is only a placeholder." if is_demo else "Tap Call provider to contact them."))
     return intro + " ".join(details)
 
 
@@ -590,3 +599,8 @@ async def presentation():
     if not PRESENTATION_FILE.is_file():
         raise HTTPException(status_code=404, detail="Presentation is unavailable.")
     return FileResponse(PRESENTATION_FILE, media_type="text/html")
+
+
+@app.get("/echolang-logo.svg", include_in_schema=False)
+async def logo():
+    return FileResponse(LOGO_FILE, media_type="image/svg+xml")

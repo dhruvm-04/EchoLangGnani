@@ -18,3 +18,4 @@ backend/data/
 coverage/
 .DS_Store
 Thumbs.db
+docs/

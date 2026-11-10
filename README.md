@@ -1,54 +1,43 @@
 # EchoLang
 
-EchoLang is a voice-first local services directory. Customers describe the help they need and hear matching providers. Providers answer spoken questions to create an entry, review it before publication, and later update, pause, or delete it. Directory entries and drafts live in a local SQLite database. The app supports Bengali, English, Gujarati, Hindi, Kannada, Malayalam, Marathi, Punjabi, Tamil, and Telugu; choosing a language changes both the interface and the speech flow.
+EchoLang helps people find local services by speaking in their own language. A worker can create a listing by answering a few questions aloud. A neighbour can describe the help they need, hear the request read back, and call a matching provider.
 
-## Deploy on Render (free web service)
+The directory searches its own SQLite listings. The demo starts with 200 fictional providers across 88 Indian cities and 31 service types, so you can try a search immediately. It does not pull results from Google or another service.
 
-The root `render.yaml` deploys a single Docker web service. Its build compiles the React app, then FastAPI serves the app and `/api` from one HTTPS origin. The presentation is at `/presentation.html`.
+## What the demo includes
 
-1. Push this repository to GitHub. Keep `backend/.env` out of Git; it is ignored, and the Docker build excludes it.
-2. In Render, select **New → Blueprint**, connect the GitHub repository, and approve the `render.yaml` Blueprint.
-3. Enter `GNANI_API_KEY` and `ECHOLANG_LLM_API_KEY` when Render requests the two secret values. Use the Gnani key with STT/TTS access and your Groq API key. The Blueprint already sets Groq's base URL and `openai/gpt-oss-120b` model.
-4. Wait for the Docker build and deploy. Open the assigned `https://…onrender.com` URL. Check `/api/health`: `gnaniKeyConfigured` and `reasoningConfigured` should both be `true`. Open the app on a phone and allow microphone access when prompted.
+- A voice and text path for finding help or offering a service.
+- Interfaces and spoken replies in Bengali, English, Gujarati, Hindi, Kannada, Malayalam, Marathi, Punjabi, Tamil, and Telugu. The language picker appears after the intro on every page load.
+- A review step before a worker publishes a listing, plus controls to edit, pause, or delete it later.
+- Clearly named demo listings with placeholder numbers. They are examples, not real people to call.
+- An operator page for reviewing submissions and reports.
+- An [HTML presentation](presentation.html) for the pitch. Use the left and right arrow keys to move through its six slides.
 
-If you created the service before adding the Blueprint secrets, enter both keys under **Environment** in the Render dashboard and redeploy. Never put keys in frontend variables or Git. For live logs and failures, use the Render service's **Logs** tab. To protect a pilot with real listings, set `ECHOLANG_REQUIRE_APPROVAL=1` and a strong `ECHOLANG_ADMIN_KEY` in Render; the operator view is at `/?operator=1`.
+The frontend is React and TypeScript. FastAPI handles the conversation and directory API, and SQLite stores listings. Gnani handles speech recognition and speech synthesis. A Groq-hosted GPT-OSS model interprets requests and helps write replies.
 
-**Free-tier data limit:** This deployment keeps SQLite at `/tmp/echolang.sqlite3`. Render's free web service sleeps after inactivity and its local files are lost on spin-down, restart, or redeploy. Provider listings, drafts, reports, and metrics therefore reset. Create a fresh demo listing after each wake, or use a paid persistent disk or an external database before collecting real provider data. A free web service also has a cold-start delay. The public demo can consume Gnani and Groq credits; monitor both dashboards and limit who receives the URL if needed. Do not treat this setup as durable storage for real providers.
+## Run it locally
 
-To test the production image locally, run `docker build -t echolang .`, then `docker run --rm -p 10000:10000 -e GNANI_API_KEY=... -e ECHOLANG_LLM_API_KEY=... -e ECHOLANG_LLM_BASE_URL=https://api.groq.com/openai/v1 -e ECHOLANG_LLM_MODEL=openai/gpt-oss-120b echolang`. Open `http://localhost:10000` for a basic check. Browser microphone capture on a phone requires the deployed HTTPS address.
+You need Python 3.11 or 3.12 and Node.js 20 or newer. These commands are for PowerShell, starting in the repository root.
 
-### Show EchoLang at `/echolang/` on a Vercel portfolio
-
-Keep the portfolio domain pointed at Vercel. In the **portfolio project's** `vercel.json`, merge these rules with any existing redirects or rewrites, then redeploy the portfolio. The portfolio's catchall rewrite must come last. Remove `"trailingSlash": false` if it is present so it does not undo the `/echolang/` redirect:
-
-```json
-{
-  "redirects": [
-    { "source": "/echolang", "destination": "/echolang/", "permanent": true }
-  ],
-  "rewrites": [
-    { "source": "/echolang/", "destination": "https://echolanggnani.onrender.com/" },
-    { "source": "/echolang/presentation", "destination": "https://echolanggnani.onrender.com/presentation.html" },
-    { "source": "/echolang/:path*", "destination": "https://echolanggnani.onrender.com/:path*" }
-  ]
-}
-```
-
-The trailing slash matters for relative frontend assets. The app uses relative asset, API, and home links, so Vercel can forward `/echolang/`, `/echolang/assets/…`, and `/echolang/api/…` to the same Render service. No DNS change or Render custom domain is needed for this path. Test `/echolang/` and `/echolang/api/health` on the portfolio domain after the portfolio deployment. The site's current root-to-`www` redirect may make the visible URL `www.dhruvmaheshwari.in/echolang/`.
-
-## Run locally
-
-Use Python 3.11 or 3.12 and Node.js 20 or newer. From this folder, in PowerShell:
+First, copy the backend environment file and add your own Gnani and Groq API keys:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
-# Edit backend/.env with your own speech and reasoning API credentials.
+```
+
+Set `GNANI_API_KEY` and `ECHOLANG_LLM_API_KEY` in `backend/.env`. The example file already contains the model names and Groq URL used by the demo. Keep that file private.
+
+The example file also sets `ECHOLANG_SEED_DEMO=1`, which adds sample listings when the API starts.
+
+Start the API:
+
+```powershell
 python -m venv backend/.venv
 backend/.venv/Scripts/python -m pip install -r backend/requirements.txt
 backend/.venv/Scripts/python -m uvicorn app.main:app --app-dir backend --reload
 ```
 
-In a second terminal:
+In a second terminal, start the frontend:
 
 ```powershell
 cd frontend
@@ -56,38 +45,49 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The backend health endpoint is at http://127.0.0.1:8000/api/health. API documentation is at http://127.0.0.1:8000/docs. The interface shows when speech or reasoning is not configured. API keys stay in the backend environment. Gnani handles speech recognition and synthesis; an OpenAI-compatible `/chat/completions` endpoint handles interpretation and localized replies. These services process spoken content, so obtain consent before using real personal details.
+Open <http://127.0.0.1:5173>. Vite sends `/api` requests to the local FastAPI server on port 8000. The [presentation](http://127.0.0.1:8000/presentation.html), [health check](http://127.0.0.1:8000/api/health), and [API documentation](http://127.0.0.1:8000/docs) are served by that backend.
 
-To open the interface on a phone connected to the same Wi-Fi, run `npm run dev:lan` in `frontend` and open `http://<computer-Wi-Fi-IP>:5173` on the phone. The backend can stay on `127.0.0.1:8000` because Vite proxies `/api` requests. Allow Node.js through Windows Firewall for the active network profile if the phone cannot reach the page. A LAN HTTP address does not provide the secure context required for browser microphone access; use an HTTPS address for the voice flows on a phone.
+The app shows a text input if the microphone is unavailable. For voice input on a phone, use an HTTPS deployment; a plain HTTP address on your local network will not give the browser microphone access.
 
-The frontend proxies `/api` to port 8000 in local development. To use different frontend origins, set `ECHOLANG_CORS_ORIGINS` as a comma-separated list. The local database defaults to `backend/data/echolang.sqlite3`; set `ECHOLANG_DB_PATH` to place it elsewhere. The database, backups, `.env`, dependencies, and build output are excluded from Git.
+If you already have a `backend/.env` file without the demo setting, add `ECHOLANG_SEED_DEMO=1` and restart the API. You can also seed the current database without restarting, from the repository root:
 
-## Use the directory
+```powershell
+$env:PYTHONPATH='backend'
+backend/.venv/Scripts/python backend/scripts/seed_demo.py
+```
 
-On first visit, choose one of the ten language buttons. **Find help** asks for a service and city or area, confirms the request, searches local entries, and reads a provider aloud. A customer can say **next**, **previous**, **repeat**, or **new search**, or use the matching buttons. A call button opens the phone dialer. Optional spoken availability and provider-language preferences narrow results. No external directory is queried.
+Running the command again will not create duplicates. It also removes old demo entries that are no longer in the seed set; real provider entries are left alone.
 
-**Offer a service** starts a question-by-question voice flow. The provider reviews the draft and chooses to publish. A private owner token is saved in that browser for later edits, pause, or deletion. Anyone with the token or a recovery link can control the listing, so share recovery links privately. Audio recordings are not stored by the app; listing details, including the public phone number, are stored locally.
+## Deploy the demo
 
-For a pilot with real providers, set `ECHOLANG_REQUIRE_APPROVAL=1` and a strong `ECHOLANG_ADMIN_KEY`. Then submissions wait for an operator to call the provider and approve them at `/?operator=1`. The operator can review reports, hide listings, locate a provider by phone, and issue a new access link after a callback. A new link revokes the previous owner token. The app does not automatically verify phone ownership or whether a job was completed. See [pilot priorities](docs/pilot-research-and-measures.md).
+The repository includes a [Render Blueprint](render.yaml) and a [Dockerfile](Dockerfile). Connect the repository to Render as a Blueprint and provide `GNANI_API_KEY` and `ECHOLANG_LLM_API_KEY` as secret environment values. If you already created the service, add the keys in its environment settings. The Docker build compiles the frontend, then serves the app and API from FastAPI on the same origin. The presentation is available at `/presentation.html`.
 
-## Checks and backups
+This deployment is meant for a demo. It automatically reloads the sample listings at startup, but its SQLite database is set to `/tmp/echolang.sqlite3`. [Render's free web services use an ephemeral filesystem](https://render.com/docs/free), so real listings and drafts can disappear when the service spins down, restarts, or is redeployed. Use durable storage before collecting real provider data. Speech and reasoning requests also use your API credits.
 
-Run the automated checks from the project root:
+If you want submissions held for review, set both `ECHOLANG_REQUIRE_APPROVAL=1` and a strong `ECHOLANG_ADMIN_KEY` on the backend. The operator page is at `/?operator=1`. Without those settings, a worker can publish a listing after reviewing it themselves.
+
+## Things to know before a pilot
+
+A listing is contact information, not a verified recommendation. Demo entries are named `Demo — ...` and use nonworking `000` numbers; their call buttons are disabled. To run a real pilot, set `ECHOLANG_SEED_DEMO=0` and use a fresh database without the samples. The app does not confirm that a phone number belongs to a worker or that a job was completed. The operator can call a provider, review reports, and issue a new access link, but those checks are manual.
+
+The browser stores an owner token so a provider can return to their listing. Anyone with that token or its recovery link can change the listing. Audio recordings are not kept by the app; published listing details, including phone numbers, are stored in SQLite. See the [pilot notes](docs/pilot-research-and-measures.md) for the questions this demo still needs to answer.
+
+## Checks
+
+From the repository root, run the backend tests with:
 
 ```powershell
 $env:PYTHONPATH='backend'
 backend/.venv/Scripts/python -m unittest discover -s backend/tests -v
-cd frontend
-npm run build
 ```
 
-The browser QA scripts (`npm run qa:languages`, `qa:live`, `qa:visual`) need a running frontend and Microsoft Edge/Playwright. Live speech checks need configured credentials and are separate from the automated tests: `backend/scripts/check_gnani.py`, `check_reasoning.py`, `smoke.py` (with consented WAV samples), and `synthetic_matrix.py`.
+From `frontend`, run `npm run build`. With the dev server running and Microsoft Edge available, `npm run qa:languages` checks the language selection and refresh flow.
 
-Create a consistent database backup with:
+To back up the default local database, run this from the repository root:
 
 ```powershell
 $env:PYTHONPATH='backend'
 backend/.venv/Scripts/python backend/scripts/backup_directory.py
 ```
 
-Backups default to `backend/data/backups/` and contain provider contact details. Protect them and test restoration before collecting real listings. The backend, frontend, and tests can be run from a fresh clone without the current machine's database or credentials; live voice features require your own configured API access.
+Backups go to `backend/data/backups/` and contain provider contact details. If you changed `ECHOLANG_DB_PATH`, set it in the shell before running the backup command.

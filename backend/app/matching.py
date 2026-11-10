@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 
 
 # This expands common spoken terms without limiting the directory to these services.
@@ -44,19 +45,22 @@ SERVICE_FILLER = {"repair", "service", "services", "help", "home", "local", "wor
 AREA_FILLER = {"near", "around", "in", "at", "area", "areas", "nearby", "city", "town"}
 
 
+@lru_cache(maxsize=8192)
 def normalized(value: str) -> str:
     ascii_value = unicodedata.normalize("NFKD", value.casefold()).encode("ascii", "ignore").decode()
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", ascii_value)).strip()
 
 
-def tokens(value: str) -> set[str]:
-    return {word[:-1] if len(word) > 4 and word.endswith("s") else word for word in normalized(value).split()}
+@lru_cache(maxsize=8192)
+def tokens(value: str) -> frozenset[str]:
+    return frozenset(word[:-1] if len(word) > 4 and word.endswith("s") else word for word in normalized(value).split())
 
 
-def concepts(value: str) -> set[str]:
+@lru_cache(maxsize=8192)
+def concepts(value: str) -> frozenset[str]:
     phrase = f" {normalized(value)} "
-    return {key for key, aliases in SERVICE_ALIASES.items()
-            if any(f" {normalized(alias)} " in phrase for alias in aliases)}
+    return frozenset(key for key, aliases in SERVICE_ALIASES.items()
+                     if any(f" {normalized(alias)} " in phrase for alias in aliases))
 
 
 def service_score(query: str, offered: str) -> int:

@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#161514">
   <title>EchoLang — Competition pitch</title>
   <meta name="description" content="EchoLang competition pitch slides, designed to sit beside the live phone demo.">
+  <link rel="icon" type="image/svg+xml" href="./echolang-logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
@@ -82,8 +83,7 @@
     .cover-grid { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(300px,.88fr); gap: clamp(28px,5vw,80px); align-items: center; }
     .cover-copy { position: relative; z-index: 1; }
     .cover-brand { display: flex; align-items: center; gap: clamp(13px,1.5vw,23px); }
-    .cover-mark { width: clamp(47px,5vw,70px); height: clamp(47px,5vw,70px); flex: none; border: 2px solid var(--ink); border-radius: 18px; transform: rotate(-14deg); display: grid; place-items: center; }
-    .cover-mark::after { content: ''; width: 32%; height: 32%; border: 1.5px solid var(--ink); border-radius: 50%; }
+    .cover-mark { width: clamp(47px,5vw,70px); height: clamp(47px,5vw,70px); flex: none; }
     .cover-title { font-size: clamp(68px,8.5vw,136px); letter-spacing: -.085em; line-height: 1; margin: 0; white-space: nowrap; }
     .cover-title em { font-family: inherit; font-style: normal; font-weight: 400; letter-spacing: -.085em; }
     .cover-tagline { font-family: 'DM Serif Display',Georgia,serif; font-style: italic; color: var(--accent); font-size: clamp(27px,3.1vw,46px); line-height: 1.15; margin: 30px 0 0; }
@@ -92,14 +92,23 @@
     .presenter strong { font-size: clamp(20px,2vw,29px); font-weight: 600; letter-spacing: -.04em; }
     .presenter span { color: var(--muted); font-size: clamp(14px,1.2vw,17px); line-height: 1.5; }
     .presenter .website { color: var(--accent); margin-top: 7px; font-weight: 600; }
-    .cover-art { height: min(68vh,570px); min-height: 390px; display: grid; place-items: center; position: relative; }
+    .cover-art { height: min(68vh,570px); min-height: 390px; display: grid; place-items: center; position: relative; isolation: isolate; }
     .cover-ring { width: min(100%,520px); aspect-ratio: 1; border: 1px solid var(--line-soft); border-radius: 50%; position: absolute; }
     .cover-ring::before, .cover-ring::after { content: ''; position: absolute; border: 1px solid var(--line-soft); border-radius: 50%; }
     .cover-ring::before { inset: 11%; }
     .cover-ring::after { inset: 22%; }
-    .cover-orb { width: clamp(180px,23vw,320px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 25%,#f7e9f3,#d7b6d4 43%,#9a799a 100%); box-shadow: 0 35px 110px rgba(185,126,181,.27), inset -23px -19px 40px rgba(65,38,65,.22); animation: float 5s ease-in-out infinite; position: relative; }
-    .cover-orb::after { content: ''; position: absolute; inset: 37%; border: 2px solid #342a36; border-radius: 50%; opacity: .55; }
-    .cover-spark { position: absolute; right: 2%; top: 12%; color: var(--accent); font-family: 'DM Serif Display',Georgia,serif; font-size: clamp(50px,6vw,90px); line-height: 1; transform: rotate(18deg); }
+    .voice-card { width: min(69%,330px); min-height: 365px; position: relative; z-index: 2; padding: 23px; border: 1px solid rgba(245,242,236,.24); border-radius: 27px; background: linear-gradient(145deg,rgba(255,255,255,.15),rgba(255,255,255,.035) 42%),rgba(36,35,33,.89); box-shadow: 0 35px 95px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.15); backdrop-filter: blur(20px); transform: rotate(-5deg); display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+    .voice-card-head,.voice-card-foot { width: 100%; display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .16em; }
+    .voice-card-head i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 14px var(--mint); }
+    .cover-orb { width: clamp(120px,13vw,165px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 25%,#f7e9f3,#d7b6d4 43%,#9a799a 100%); box-shadow: 0 20px 70px rgba(185,126,181,.28),inset -15px -13px 30px rgba(65,38,65,.2); animation: float 5s ease-in-out infinite; display: grid; place-items: center; }
+    .cover-orb img { width: 46%; filter: drop-shadow(0 9px 15px rgba(38,25,39,.25)); }
+    .wave-bars { height: 37px; display: flex; justify-content: center; align-items: center; gap: 5px; }
+    .wave-bars span { display: block; width: 4px; height: var(--height); border-radius: 10px; background: var(--accent); animation: wave 1.5s ease-in-out infinite alternate; animation-delay: var(--delay); }
+    .voice-card-foot { border-top: 1px solid var(--line); padding-top: 15px; color: var(--accent); }
+    .cover-chip { position: absolute; z-index: 3; border: 1px solid var(--line); border-radius: 100px; background: var(--panel); color: var(--ink); box-shadow: var(--shadow); padding: 11px 16px; font-size: 12px; font-weight: 600; }
+    .cover-chip::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); margin-right: 9px; vertical-align: 2px; }
+    .cover-chip.top { top: 17%; right: 0; transform: rotate(6deg); }
+    .cover-chip.bottom { bottom: 18%; left: 0; transform: rotate(-7deg); }
     .hero-grid, .gap-grid, .demo-grid, .stack-grid { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(320px,.92fr); gap: clamp(34px,4.5vw,75px); align-items: center; }
     .hero-copy { position: relative; z-index: 1; }
     .hero-copy .lead { max-width: 500px; }
@@ -109,8 +118,11 @@
     .signal-ring { position: absolute; width: 94%; max-width: 510px; aspect-ratio: 1; border: 1px solid var(--line-soft); border-radius: 50%; }
     .signal-ring::before, .signal-ring::after { content: ''; position: absolute; inset: 12%; border: 1px solid var(--line-soft); border-radius: 50%; }
     .signal-ring::after { inset: 25%; }
-    .signal-orb { width: clamp(150px,18vw,265px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 24%,#f7e9f3,#d7b6d4 42%,#9a799a 100%); box-shadow: 0 35px 100px rgba(185,126,181,.28), inset -20px -18px 35px rgba(65,38,65,.24); position: relative; animation: float 5s ease-in-out infinite; }
-    .signal-orb::after { content: ''; position: absolute; inset: 34%; border: 2px solid #342a36; border-radius: 50%; opacity: .55; }
+    .signal-orb { width: clamp(160px,18vw,255px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 24%,#f7e9f3,#d7b6d4 42%,#9a799a 100%); box-shadow: 0 35px 100px rgba(185,126,181,.28), inset -20px -18px 35px rgba(65,38,65,.24); position: relative; animation: float 5s ease-in-out infinite; display: grid; place-items: center; z-index: 1; }
+    .signal-orb img { width: 35%; filter: drop-shadow(0 9px 16px rgba(38,25,39,.25)); }
+    .signal-wave { position: absolute; z-index: 2; left: 50%; bottom: 27%; transform: translateX(-50%); padding: 7px 18px; border: 1px solid var(--line); border-radius: 100px; background: var(--panel); box-shadow: var(--shadow); }
+    .signal-wave .wave-bars { height: 25px; }
+    .signal-wave .wave-bars span { width: 3px; max-height: 22px; }
     .quote-card { position: absolute; z-index: 1; width: min(78%,320px); padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); }
     .quote-card small { display: block; margin-bottom: 9px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
     .quote-card strong { font-size: clamp(14px,1.2vw,17px); font-weight: 500; line-height: 1.4; }
@@ -173,6 +185,7 @@
     .closing-note { color: var(--muted); font-size: 14px; line-height: 1.5; }
     @keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes float { 50% { transform: translateY(-12px); } }
+    @keyframes wave { to { transform: scaleY(.42); opacity: .6; } }
     @media (max-width: 1080px) {
       .cover-grid, .hero-grid, .gap-grid, .demo-grid { gap: 25px; }
     }
@@ -180,7 +193,9 @@
       .slide { padding-top: 38px; padding-bottom: 38px; }
       .cover-grid, .hero-grid, .gap-grid, .demo-grid { grid-template-columns: 1fr; }
       .cover-art { height: 290px; min-height: 290px; max-width: 520px; width: 100%; margin: 0 auto; }
-      .cover-orb { width: 180px; }
+      .voice-card { min-height: 250px; width: 245px; padding: 17px; }
+      .cover-orb { width: 100px; }
+      .cover-chip { font-size: 10px; padding: 8px 11px; }
       .signal-field { height: 320px; min-height: 320px; max-width: 530px; width: 100%; margin: 0 auto; }
       .signal-orb { width: 170px; }
       .quote-card { padding: 13px 16px; }
@@ -200,11 +215,13 @@
       .slide { min-height: 100svh; }
       .cover-brand { align-items: center; }
       .cover-title { font-size: clamp(47px,13vw,71px); }
-      .cover-mark { width: 38px; height: 38px; border-radius: 12px; }
+      .cover-mark { width: 38px; height: 38px; }
       .cover-tagline { margin-top: 23px; }
       .presenter { margin-top: 42px; }
-      .cover-art { height: 220px; min-height: 220px; }
-      .cover-orb { width: 145px; }
+      .cover-art { height: 275px; min-height: 275px; }
+      .voice-card { min-height: 238px; width: 205px; padding: 15px; }
+      .cover-orb { width: 88px; }
+      .cover-chip { display: none; }
       h1 { font-size: clamp(48px,12vw,70px); }
       h2 { font-size: clamp(43px,10vw,60px); }
       .signal-field { height: 290px; min-height: 290px; }
@@ -239,9 +256,7 @@
       background-color: var(--panel);
       box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.08);
     }
-    .cover-orb,.signal-orb {
-      background-image: repeating-radial-gradient(circle at 49% 53%,transparent 0 15px,rgba(75,43,75,.045) 16px 17px,transparent 18px 30px),radial-gradient(circle at 30% 25%,#f7e9f3,#d7b6d4 43%,#9a799a 100%);
-    }
+    .cover-orb,.signal-orb { background-image: repeating-radial-gradient(circle at 49% 53%,transparent 0 15px,rgba(75,43,75,.045) 16px 17px,transparent 18px 30px),radial-gradient(circle at 30% 25%,#f7e9f3,#d7b6d4 43%,#9a799a 100%); }
     @media print {
       :root { color-scheme: light; }
       body, .deck { background: white !important; color: #24211f !important; }
@@ -256,16 +271,25 @@
       <section class="slide" data-slide="0" aria-label="Slide 1: Title and presenter">
         <div class="slide-content cover-grid">
           <div class="cover-copy">
-            <div class="cover-brand"><span class="cover-mark" aria-hidden="true"></span><h1 class="cover-title">echo<em>lang.</em></h1></div>
+            <div class="cover-brand"><img class="cover-mark" src="./echolang-logo.svg" alt=""><h1 class="cover-title">echo<em>lang.</em></h1></div>
             <p class="cover-tagline">Every neighbourhood has a voice.</p>
-            <p class="entry-label">Gnani Internship Challenge Entry 2026</p>
+            <p class="entry-label">Gnani AI Internship Challenge 2026</p>
             <div class="presenter">
               <strong>Dhruv Maheshwari</strong>
-              <span>4th Year BTech CSE Student<br>at PES University, Bengaluru</span>
-              <span class="website">dhruvmaheshwari.in</span>
+              <span>B.Tech CSE batch of 2027<br>at PES University, Bengaluru</span>
+              <a class="website" href="https://dhruvmaheshwari.in/echolang">dhruvmaheshwari.in/echolang</a>
             </div>
           </div>
-          <div class="cover-art" aria-hidden="true"><div class="cover-ring"></div><div class="cover-orb"></div><span class="cover-spark">✳</span></div>
+          <div class="cover-art" aria-hidden="true">
+            <div class="cover-ring"></div>
+            <div class="voice-card">
+              <div class="voice-card-head"><span>ECHOLANG / 001</span><i></i></div>
+              <div class="cover-orb"><img src="./echolang-logo.svg" alt=""></div>
+              <div class="wave-bars"><span style="--height:12px;--delay:-.4s"></span><span style="--height:26px;--delay:-.8s"></span><span style="--height:35px;--delay:-.2s"></span><span style="--height:19px;--delay:-1.1s"></span><span style="--height:31px;--delay:-.6s"></span><span style="--height:15px;--delay:-.9s"></span><span style="--height:23px;--delay:-.1s"></span></div>
+              <div class="voice-card-foot"><span>YOUR VOICE</span><span>LOCAL HELP ↗</span></div>
+            </div>
+            <span class="cover-chip top">Say what you need</span><span class="cover-chip bottom">Find someone nearby</span>
+          </div>
         </div>
       </section>
 
@@ -277,7 +301,8 @@
             <span class="hero-tag"><i aria-hidden="true"></i> Built with Gnani AI speech</span>
           </div>
           <div class="signal-field" aria-hidden="true">
-            <div class="signal-ring"></div><div class="signal-orb"></div>
+            <div class="signal-ring"></div><div class="signal-orb"><img src="./echolang-logo.svg" alt=""></div>
+            <div class="signal-wave"><div class="wave-bars"><span style="--height:9px;--delay:-.2s"></span><span style="--height:20px;--delay:-.7s"></span><span style="--height:15px;--delay:-.4s"></span><span style="--height:25px;--delay:-1s"></span><span style="--height:13px;--delay:-.5s"></span><span style="--height:19px;--delay:-.8s"></span><span style="--height:8px;--delay:-.1s"></span></div></div>
             <div class="quote-card top"><small>Neighbour</small><strong>“I need fan repair in Udaipur.”</strong></div>
             <div class="quote-card bottom"><small>Local worker</small><strong>“I repair fans in Udaipur.”</strong></div>
           </div>

@@ -11,6 +11,7 @@ import sqlite3
 from contextlib import closing, contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Iterable
 
 from .matching import area_matches, availability_matches, language_matches, service_score
 
@@ -103,6 +104,40 @@ class DirectoryStore:
             if "resolution" not in columns:
                 db.execute("ALTER TABLE reports ADD COLUMN resolution TEXT")
             db.execute("CREATE INDEX IF NOT EXISTS providers_phone_idx ON providers(phone)")
+
+    def seed_demo(self, listings: Iterable[dict]) -> tuple[int, int]:
+        """Sync sample listings without changing real or retained sample rows."""
+        listings = tuple(listings)
+        wanted = {listing["id"] for listing in listings}
+        if not listings or len(wanted) != len(listings) or any(not item.startswith("demo-") for item in wanted):
+            raise ValueError("Demo listings need unique demo-prefixed IDs.")
+        timestamp = _now()
+        added = 0
+        with self._db() as db:
+            db.execute("BEGIN IMMEDIATE")
+            obsolete = [row["id"] for row in db.execute("SELECT id FROM providers WHERE id LIKE 'demo-%'")
+                        if row["id"] not in wanted]
+            for provider_id in obsolete:
+                db.execute("DELETE FROM reports WHERE provider_id = ?", (provider_id,))
+                db.execute("DELETE FROM edits WHERE provider_id = ?", (provider_id,))
+                db.execute("DELETE FROM providers WHERE id = ?", (provider_id,))
+            for listing in listings:
+                inserted = db.execute(
+                    """INSERT OR IGNORE INTO providers
+                       (id, name, area, delivery, phone, hours, languages, price,
+                        token_hash, status, created_at, updated_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)""",
+                    (listing["id"], listing["name"], listing["area"], listing["delivery"],
+                     listing["phone"], listing["hours"], listing["languages"], listing["price"],
+                     hashlib.sha256(secrets.token_bytes(32)).hexdigest(), timestamp, timestamp),
+                )
+                if inserted.rowcount:
+                    db.executemany(
+                        "INSERT INTO services (provider_id, name) VALUES (?, ?)",
+                        [(listing["id"], service) for service in listing["services"]],
+                    )
+                    added += 1
+        return added, len(obsolete)
 
     def new_draft(self, language: str) -> dict:
         draft = {"id": secrets.token_urlsafe(24), "fields": {}, "cursor": 0, "language": language}
@@ -206,14 +241,19 @@ class DirectoryStore:
         if not service.strip():
             return []
         with self._db() as db:
-            rows = db.execute("SELECT * FROM providers WHERE status = 'published' ORDER BY updated_at DESC LIMIT 1000").fetchall()
+            rows = db.execute("SELECT * FROM providers WHERE status = 'published'").fetchall()
+            services_by_provider: dict[str, list[str]] = {}
+            for item in db.execute("""SELECT services.provider_id, services.name FROM services
+                                      JOIN providers ON providers.id = services.provider_id
+                                      WHERE providers.status = 'published'"""):
+                services_by_provider.setdefault(item["provider_id"], []).append(item["name"])
             candidates = []
             for row in rows:
-                services = [item["name"] for item in db.execute("SELECT name FROM services WHERE provider_id = ?", (row["id"],))]
+                if not area_matches(area, row["area"]):
+                    continue
+                services = services_by_provider.get(row["id"], [])
                 score = max((service_score(service, item) for item in services), default=0)
                 if score == 0:
-                    continue
-                if not area_matches(area, row["area"]):
                     continue
                 if not availability_matches(availability, row["hours"], now):
                     continue
@@ -301,7 +341,7 @@ class DirectoryStore:
         since = (datetime.now(timezone.utc) - timedelta(days=days - 1)).date().isoformat()
         with self._db() as db:
             rows = db.execute("SELECT event, SUM(count) AS count FROM daily_metrics WHERE day >= ? GROUP BY event", (since,)).fetchall()
-            statuses = db.execute("SELECT status, COUNT(*) AS count FROM providers GROUP BY status").fetchall()
+            statuses = db.execute("SELECT status, COUNT(*) AS count FROM providers WHERE id NOT LIKE 'demo-%' GROUP BY status").fetchall()
         return {**{row["event"]: row["count"] for row in rows}, **{f"listings_{row['status']}": row["count"] for row in statuses}}
 
     def set_status(self, provider_id: str, status: str) -> dict | None:

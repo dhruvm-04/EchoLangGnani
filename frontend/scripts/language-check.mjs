@@ -43,7 +43,11 @@ try {
     if (code === 'ta-IN') { await page.waitForTimeout(800); await page.screenshot({ path: '.qa/tamil-home.png', fullPage: true }) }
     await page.reload({ waitUntil: 'networkidle' })
     await page.locator('.splash').waitFor({ state: 'hidden' })
-    if (await page.locator('.language-grid').count()) throw new Error(`Language picker reappeared for ${code}`)
+    if (await page.locator('.language-grid button').count() !== 10) throw new Error(`Language picker missing after refreshing ${code}`)
+    const remembered = await page.evaluate(() => localStorage.getItem('echolang-language'))
+    if (remembered !== code) throw new Error(`Saved language was lost after refreshing ${code}`)
+    await page.locator(`.language-grid button[lang="${code.slice(0, 2)}"]`).click()
+    if (!await page.getByRole('button', { name: translations[code].findHelp, exact: true }).isVisible()) throw new Error(`App did not resume after choosing ${code} again`)
     await context.close()
   }
 
@@ -74,14 +78,14 @@ try {
   await page.getByRole('button', { name: translations['hi-IN'].yes }).waitFor()
   if (customerLanguage !== 'hi-IN') throw new Error('Customer request did not use the selected voice language')
   await page.getByRole('button', { name: translations['hi-IN'].offerService, exact: true }).click()
-  await page.getByRole('button', { name: translations['hi-IN'].startListing }).click()
+  await page.locator('.result-main').getByText(translations['hi-IN'].startListing).click()
   if (startedLanguage !== 'hi-IN') throw new Error('Provider onboarding did not use the selected voice language')
   await page.locator('.language-switch').click()
   await page.locator('.language-grid button[lang="ta"]').click()
   await page.getByText('உங்கள் பெயர் என்ன?').waitFor()
   if (resumedLanguage !== 'ta-IN') throw new Error('Changing language did not update the provider draft')
   await context.close()
-  console.log('All ten UI languages, persistence, and provider language switching passed.')
+  console.log('All ten UI languages, refresh picker, saved language, and provider language switching passed.')
 } finally {
   await browser.close()
 }
