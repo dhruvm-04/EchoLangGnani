@@ -1,6 +1,6 @@
 # EchoLang
 
-· [Try the live demo here](https://www.dhruvmaheshwari.in/echolang/)\
+· [Try the live demo here](https://www.dhruvmaheshwari.in/echolang/) _Might take up to a minute to load since the instance needs to spin up._\
 · [Read the one-page solution pitch](SOLUTION_PITCH.pdf)\
 · [View the presentation](presentation.html)
 
