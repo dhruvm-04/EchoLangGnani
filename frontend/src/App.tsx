@@ -33,7 +33,7 @@ function friendlyError(language: string, code?: string): string {
 
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('echolang-theme') === 'light' ? 'light' : 'dark')
-  const [showSplash, setShowSplash] = useState(() => !localStorage.getItem('echolang-intro-seen') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [showSplash, setShowSplash] = useState(true)
   const [config, setConfig] = useState<Config | null>(null)
   const [language, setLanguage] = useState<LanguageCode>(() => {
     const saved = localStorage.getItem('echolang-language') || ''
@@ -77,7 +77,8 @@ function App() {
   useEffect(() => { document.documentElement.lang = language.slice(0, 2) }, [language])
   useEffect(() => {
     if (!showSplash) return
-    const timer = window.setTimeout(() => { localStorage.setItem('echolang-intro-seen', '1'); setShowSplash(false) }, 2400)
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 900 : 4000
+    const timer = window.setTimeout(() => setShowSplash(false), duration)
     return () => window.clearTimeout(timer)
   }, [showSplash])
   useEffect(() => {
@@ -335,6 +336,7 @@ function App() {
   const textGuidance = editProposal?.replyText || (providerTurn?.phase === 'published' ? '' : providerTurn?.replyText) || (mode === 'find' ? turn?.replyText : '') || ui(language, 'typeInstead')
   const guidance = !config ? ui(language, 'oneMoment') : !config.reasoningConfigured ? ui(language, 'voiceUnavailable') : recording ? ui(language, 'speakStop') : busy ? ui(language, 'pleaseWait') : voiceReady ? flowGuidance : textGuidance
   const locationLabel = placeOverride || conversation.location || ui(language, 'placeNeeded')
+  const compactVoice = (mode === 'find' && ['awaiting_confirmation', 'done'].includes(turn?.state.phase || '')) || (mode === 'offer' && (providerTurn?.phase === 'review' || Boolean(myListing && (!providerTurn || providerTurn.phase === 'published'))))
 
   useEffect(() => {
     if (mode !== 'find' || turn?.state.phase !== 'done' || turn.activeIndex === null) return
@@ -345,7 +347,6 @@ function App() {
 
   if (showSplash) return <div className="splash" aria-label="EchoLang introduction">
     <div className="splash-pattern" aria-hidden="true" />
-    <button className="splash-skip" type="button" onClick={() => { localStorage.setItem('echolang-intro-seen', '1'); setShowSplash(false) }}>Skip <ArrowRight size={17} /></button>
     <div className="splash-content">
       <div className="splash-emblem" aria-hidden="true"><span className="splash-emblem-core" /><span className="splash-wave wave-one" /><span className="splash-wave wave-two" /><span className="splash-wave wave-three" /></div>
       <p className="splash-kicker">A LOCAL SERVICES DIRECTORY</p>
@@ -387,11 +388,11 @@ function App() {
       <section className="intro" aria-labelledby="main-title">
         <p className="eyebrow"><span className="eyebrow-line" /> {ui(language, 'eyebrow')}</p>
         <h1 id="main-title"><em>{ui(language, mode === 'find' ? 'findTitle' : 'offerTitle')}</em></h1>
-        <p className="intro-copy">{ui(language, mode === 'find' ? 'findIntro' : 'offerIntro')}</p>
+        {(!config || voiceReady || mode === 'offer') && <p className="intro-copy">{ui(language, mode === 'find' ? 'findIntro' : !voiceReady ? 'offerBegin' : 'offerIntro')}</p>}
         <div className="intro-footer"><span className="tiny-star">✳</span><span>{ui(language, 'tagline')}</span></div>
       </section>
 
-      <section className={`voice-panel ${!voiceReady ? 'text-first' : ''}`} aria-label={ui(language, mode === 'find' ? 'findHelp' : 'offerService')}>
+      <section className={`voice-panel ${!voiceReady ? 'text-first' : ''} ${compactVoice ? 'is-followup' : ''}`} aria-label={ui(language, mode === 'find' ? 'findHelp' : 'offerService')}>
         <div className="mode-switch" role="group" aria-label={ui(language, 'chooseAction')}>
           <button type="button" className={mode === 'find' ? 'active' : ''} onClick={() => switchMode('find')}><Search size={17} /> {ui(language, 'findHelp')}</button>
           <button type="button" className={mode === 'offer' ? 'active' : ''} onClick={() => switchMode('offer')}><BriefcaseBusiness size={17} /> {ui(language, 'offerService')}</button>
@@ -400,7 +401,7 @@ function App() {
         <div className="voice-center">
           <div className={`orb-frame ${recording ? 'is-recording' : ''} ${busy ? 'is-busy' : ''}`}>
             <span className="orbit orbit-one" /><span className="orbit orbit-two" />
-            <button className="record-button" type="button" disabled={busy || !voiceReady || (mode === 'offer' && !providerTurn?.draftId && !myListing) || (mode === 'offer' && providerTurn?.phase === 'published' && !myListing)} onClick={() => void toggleRecording()} aria-label={ui(language, recording ? 'stopRecording' : 'startRecording')}>
+            <button className="record-button" type="button" disabled={busy || !voiceReady || (mode === 'offer' && providerTurn?.phase === 'published' && !myListing)} onClick={() => { if (mode === 'offer' && !providerTurn?.draftId && !myListing) void startProvider(); else void toggleRecording() }} aria-label={ui(language, mode === 'offer' && !providerTurn?.draftId && !myListing ? 'startListing' : recording ? 'stopRecording' : 'startRecording')}>
               {recording ? <Pause size={34} fill="currentColor" strokeWidth={1.5} /> : <Mic size={38} strokeWidth={1.7} />}
             </button>
           </div>
@@ -410,19 +411,24 @@ function App() {
 
         {error && <div className="notice error" role="alert"><X size={17} /> <span>{error}</span></div>}
         {notice && <div className="notice success" role="status"><Check size={17} /> <span>{notice}</span></div>}
-        {heardText && <div className="heard"><span>{ui(language, 'youSaid')}</span><p>{heardText}</p></div>}
+        {heardText && !(mode === 'find' && turn?.state.phase === 'done') && !(mode === 'offer' && providerTurn?.phase === 'review') && <div className="heard"><span>{ui(language, 'youSaid')}</span><p>{heardText}</p></div>}
         {mode === 'find' && turn?.state.phase === 'awaiting_confirmation' && <div className="confirm-actions">
           <button type="button" className="button-primary" disabled={busy} onClick={() => void sendTurn('yes', true)}><Check size={19} /> {ui(language, 'yes')}</button>
           <button type="button" className="button-quiet" disabled={busy} onClick={() => void sendTurn('no', true)}><RotateCcw size={18} /> {ui(language, 'changeNeed')}</button>
           <button type="button" className="button-quiet" disabled={busy} onClick={sayPlace}><MapPin size={18} /> {ui(language, 'changePlace')}</button>
         </div>}
+        {(voiceReady || showType) && <div className="quick-input">
+          {voiceReady && <button className="type-toggle" type="button" onClick={() => setShowType(!showType)}>{ui(language, showType ? 'hideText' : 'typeInstead')} <ArrowRight size={15} /></button>}
+          {showType && mode === 'find' && <form className="type-form" onSubmit={event => { event.preventDefault(); if (typedText.trim() && !busy && config?.reasoningConfigured) { void sendTurn(typedText.trim()); setTypedText('') } }}><label htmlFor="type-input">{ui(language, 'requestLabel')}</label><div><input id="type-input" value={typedText} disabled={!config?.reasoningConfigured} onChange={event => setTypedText(event.target.value)} placeholder={ui(language, 'requestPlaceholder')} /><button type="submit" disabled={busy || !config?.reasoningConfigured || !typedText.trim()} aria-label={ui(language, 'sendRequest')}><ArrowRight size={19} /></button></div></form>}
+          {showType && mode === 'offer' && (providerTurn?.draftId || myListing) && <form className="type-form" onSubmit={event => { event.preventDefault(); if (!providerInput.trim() || busy || !config?.reasoningConfigured) return; if (editProposal?.field) void answerEdit(providerInput.trim()); else if (providerTurn?.draftId && providerTurn.phase !== 'published') void sendProvider(providerInput.trim()); else if (myListing) void prepareEdit(providerInput.trim()); setProviderInput('') }}><label htmlFor="provider-input">{ui(language, 'answerLabel')}</label><div><input id="provider-input" value={providerInput} disabled={!config?.reasoningConfigured} onChange={event => setProviderInput(event.target.value)} placeholder={ui(language, 'answerPlaceholder')} /><button type="submit" disabled={busy || !config?.reasoningConfigured || !providerInput.trim()} aria-label={ui(language, 'sendAnswer')}><ArrowRight size={19} /></button></div></form>}
+        </div>}
         {audioUrl && <button className="listen-again" type="button" onClick={() => { if (audioRef.current) { audioRef.current.currentTime = 0; audioRef.current.play().catch(() => {}) } }}><Play size={16} fill="currentColor" /> {ui(language, 'hearAgain')}</button>}
         <audio ref={audioRef} hidden />
 
-        {mode === 'find' && turn?.state.phase === 'done' && <div className="results" aria-label={ui(language, 'findResults')}>
+        {mode === 'find' && turn?.state.phase === 'done' && <div className={`results ${turn.matches?.length ? '' : 'no-matches'}`} aria-label={ui(language, 'findResults')}>
           <div className="results-heading"><span>02 / {ui(language, 'findResults')}</span><Search size={18} /></div>
           {(turn.state.availability || turn.state.preferred_language) && <div className="filter-summary">{turn.state.availability && <span>{ui(language, 'when')}: {turn.state.availability}</span>}{turn.state.preferred_language && <span>{ui(language, 'speaks')}: {turn.state.preferred_language}</span>}</div>}
-          <p>{turn.matches?.length ? ui(language, 'resultCount', { index: Math.min((turn.activeIndex ?? 0) + 1, turn.matches.length), total: turn.matches.length }) : ui(language, 'noMatches')}</p>
+          {!turn.matches?.length && <p>{ui(language, 'noMatches')}</p>}
           {(turn.matches || []).map((provider, index) => <article className={`provider-card ${index === turn.activeIndex ? 'active' : ''}`} id={`provider-${index}`} key={provider.id} aria-current={index === turn.activeIndex ? 'true' : undefined}>
             <strong>{provider.name}</strong><span>{provider.services.join(' · ')}</span>
             <small>{provider.area} · {provider.delivery}{provider.hours ? ` · ${provider.hours}` : ''}{provider.languages ? ` · ${provider.languages}` : ''}</small>
@@ -435,20 +441,21 @@ function App() {
         {mode === 'offer' && !providerTurn && !myListing && <div className="offer-actions"><p>{ui(language, 'offerBegin')}</p><button type="button" className="result-main" disabled={busy || !config?.reasoningConfigured} onClick={() => void startProvider()}>{ui(language, 'startListing')} <ArrowRight size={19} /></button></div>}
         {mode === 'offer' && providerTurn?.phase === 'question' && <div className="offer-actions">
           <div className="results-heading"><span>{ui(language, 'detail', { index: Math.max(1, listingFields.indexOf(providerTurn.field || '') + 1) })}</span><Pencil size={16} /></div>
-          <p>{ui(language, 'answerHint')}</p>
+          <p>{ui(language, voiceReady ? 'answerHint' : 'answerLabel')}</p>
           {providerTurn.field && !['name','services','area','delivery','phone'].includes(providerTurn.field) && <button type="button" className="button-quiet offer-skip" disabled={busy} onClick={() => void sendProvider('skip', true)}>{ui(language, 'skipDetail')}</button>}
         </div>}
         {mode === 'offer' && providerTurn?.phase === 'review' && <div className="offer-actions">
           <div className="results-heading"><span>{ui(language, 'reviewListing')}</span><ShieldCheck size={16} /></div>
-          <dl className="listing-details">{Object.entries(providerTurn.fields || {}).filter(([field, value]) => listingFields.includes(field) && value).map(([field, value]) => <div key={field}><dt>{ui(language, field as CopyKey)}</dt><dd>{value}</dd></div>)}</dl>
+          <dl className="listing-details">{Object.entries(providerTurn.fields || {}).filter(([field, value]) => listingFields.includes(field) && value).map(([field, value]) => <div className="listing-review-row" key={field}><dt>{ui(language, field as CopyKey)}</dt><dd>{value}</dd><button type="button" className="field-change" disabled={busy} onClick={() => void sendProvider(`change:${field}`, true)} aria-label={`${ui(language, 'change')} ${ui(language, field as CopyKey)}`}>{ui(language, 'change')}</button></div>)}</dl>
           <p>{ui(language, 'reviewPrivacy')}</p>
+          {!voiceReady && <p>{ui(language, 'typeInstead')}</p>}
           <button type="button" className="result-main" disabled={busy} onClick={() => void sendProvider('publish', true)}>{ui(language, 'publishListing')} <Check size={19} /></button>
         </div>}
         {mode === 'offer' && myListing && (!providerTurn || providerTurn.phase === 'published') && <div className="offer-actions">
           <div className="results-heading"><span>{ui(language, 'listingTitle')}</span><BriefcaseBusiness size={16} /></div>
           <p className="listing-status">{ui(language, myListing.status === 'published' ? 'liveStatus' : myListing.status === 'paused' ? 'pausedStatus' : myListing.status === 'hidden' ? 'hiddenStatus' : 'pendingStatus')}</p>
           <dl className="listing-details">{Object.entries({ name: myListing.name, services: myListing.services.join(', '), area: myListing.area, delivery: myListing.delivery, phone: myListing.phone, hours: myListing.hours, languages: myListing.languages, price: myListing.price }).filter(([, value]) => value).map(([field, value]) => <div key={field}><dt>{ui(language, field as CopyKey)}</dt><dd>{value}</dd></div>)}</dl>
-          <p>{ui(language, 'updateHint')}</p>
+          <p>{ui(language, voiceReady ? 'updateHint' : 'typeInstead')}</p>
           <div className="listing-controls">
             {myListing.status === 'published' && <button type="button" disabled={busy} onClick={() => void changeListingStatus('paused')}>{ui(language, 'pauseListing')}</button>}
             {myListing.status === 'paused' && <button type="button" disabled={busy} onClick={() => void changeListingStatus('published')}>{ui(language, 'showAgain')}</button>}
@@ -470,9 +477,6 @@ function App() {
             <button type="button" className="text-link" onClick={() => { setPlaceDraft(placeOverride); setShowPlace(!showPlace) }}>{ui(language, 'change')}</button>
           </div>}
           {mode === 'find' && showPlace && <div className="place-editor"><label htmlFor="place-input">{ui(language, 'cityLabel')}</label><div><input id="place-input" value={placeDraft} onChange={event => setPlaceDraft(event.target.value)} placeholder={ui(language, 'placePlaceholder')} /><button type="button" onClick={savePlace}>{ui(language, 'save')}</button></div></div>}
-          {voiceReady && <button className="type-toggle" type="button" onClick={() => setShowType(!showType)}>{ui(language, showType ? 'hideText' : 'typeInstead')} <ArrowRight size={15} /></button>}
-          {showType && mode === 'find' && <form className="type-form" onSubmit={event => { event.preventDefault(); if (typedText.trim() && !busy) { void sendTurn(typedText.trim()); setTypedText('') } }}><label htmlFor="type-input">{ui(language, 'requestLabel')}</label><div><input id="type-input" value={typedText} onChange={event => setTypedText(event.target.value)} placeholder={ui(language, 'requestPlaceholder')} /><button type="submit" disabled={busy || !typedText.trim()} aria-label={ui(language, 'sendRequest')}><ArrowRight size={19} /></button></div></form>}
-          {showType && mode === 'offer' && (providerTurn?.draftId || myListing) && <form className="type-form" onSubmit={event => { event.preventDefault(); if (!providerInput.trim() || busy) return; if (editProposal?.field) void answerEdit(providerInput.trim()); else if (providerTurn?.draftId && providerTurn.phase !== 'published') void sendProvider(providerInput.trim()); else if (myListing) void prepareEdit(providerInput.trim()); setProviderInput('') }}><label htmlFor="provider-input">{ui(language, 'answerLabel')}</label><div><input id="provider-input" value={providerInput} onChange={event => setProviderInput(event.target.value)} placeholder={ui(language, 'answerPlaceholder')} /><button type="submit" disabled={busy || !providerInput.trim()} aria-label={ui(language, 'sendAnswer')}><ArrowRight size={19} /></button></div></form>}
         </div>
       </section>
     </main>
@@ -489,6 +493,7 @@ function OperatorPanel() {
   const [providers, setProviders] = useState<Provider[]>([])
   const [reports, setReports] = useState<Report[]>([])
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [recoveryLink, setRecoveryLink] = useState('')
   const [lookupPhone, setLookupPhone] = useState('')
@@ -496,7 +501,7 @@ function OperatorPanel() {
   const [metrics, setMetrics] = useState<Record<string, number> | null>(null)
 
   async function load() {
-    setBusy(true); setError('')
+    setBusy(true); setError(''); setNotice('')
     try {
       const headers = { 'X-Admin-Key': key }
       const [pendingResponse, reportsResponse, metricsResponse] = await Promise.all([
@@ -506,6 +511,7 @@ function OperatorPanel() {
       setProviders((await pendingResponse.json()).providers)
       setReports((await reportsResponse.json()).reports)
       setMetrics((await metricsResponse.json()).counts)
+      setNotice('Directory review is up to date.')
     } catch { setError('The directory is offline.') }
     finally { setBusy(false) }
   }
@@ -516,6 +522,7 @@ function OperatorPanel() {
       const response = await fetch(`/api/admin/providers/${provider.id}/status`, { method: 'POST', headers: { 'X-Admin-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
       if (!response.ok) { setError('Could not update this entry.'); return }
       setProviders(items => items.filter(item => item.id !== provider.id))
+      setNotice(status === 'published' ? 'Entry approved.' : 'Entry rejected.')
     } catch { setError('The directory is offline.') }
     finally { setBusy(false) }
   }
@@ -526,6 +533,7 @@ function OperatorPanel() {
       const response = await fetch(`/api/admin/reports/${report.id}/resolve`, { method: 'POST', headers: { 'X-Admin-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ resolution }) })
       if (!response.ok) { setError('Could not resolve this report.'); return }
       setReports(items => items.filter(item => item.id !== report.id))
+      setNotice(resolution === 'hidden' ? 'Listing hidden and report resolved.' : 'Report marked as checked.')
     } catch { setError('The directory is offline.') }
     finally { setBusy(false) }
   }
@@ -556,10 +564,11 @@ function OperatorPanel() {
     <main className="operator-page"><h1>Directory <em>review.</em></h1><p>Review new entries and customer reports.</p>
       <form onSubmit={event => { event.preventDefault(); void load() }}><label htmlFor="operator-key">Operator key</label><div><input id="operator-key" type="password" value={key} onChange={event => setKey(event.target.value)} autoComplete="off" /><button type="submit" disabled={!key || busy}>Load entries</button></div></form>
       {error && <p role="alert">{error}</p>}
+      {notice && <p role="status">{notice}</p>}
       {recoveryLink && <div className="operator-card" role="status"><strong>New access link</strong><p>Send privately to the provider after the callback. Anyone with this link can edit or delete the listing. It replaces access on the old device.</p><input aria-label="Recovery link" readOnly value={recoveryLink} onFocus={event => event.currentTarget.select()} /><button type="button" onClick={() => { void navigator.clipboard.writeText(recoveryLink) }}>Copy link</button></div>}
       {metrics && <section><h2>Pilot activity · last 30 days</h2><div className="metric-grid">{[['provider_started', 'Listings started'], ['provider_published', 'Listings submitted'], ['search_with_results', 'Searches with results'], ['search_without_results', 'Searches with no results'], ['contact_tapped', 'Call taps'], ['listing_reported', 'Reports'], ['listings_published', 'Live listings']].map(([event, label]) => <div key={event}><strong>{metrics[event] || 0}</strong><span>{label}</span></div>)}</div><p>Counts are aggregate; they do not track callers or prove a job was completed.</p></section>}
       <section><h2>Find a listing for recovery</h2><p>Call the listed phone number and confirm the provider before creating a new access link.</p><form onSubmit={event => { event.preventDefault(); void lookupProvider() }}><label htmlFor="lookup-phone">Provider phone number</label><div><input id="lookup-phone" inputMode="tel" value={lookupPhone} onChange={event => setLookupPhone(event.target.value)} /><button type="submit" disabled={busy || !key || lookupPhone.replace(/\D/g, '').length < 10}>Find</button></div></form>{lookupResults.map(provider => <article className="operator-card" key={provider.id}><strong>{provider.name}</strong><p>{provider.services.join(', ')} · {provider.area} · {provider.status}</p><button type="button" disabled={busy} onClick={() => void recoverProvider(provider.id)}>Create access link after callback</button></article>)}</section>
-      <section><h2>Pending entries</h2>{providers.length === 0 ? <p>No pending entries loaded.</p> : providers.map(provider => <article className="operator-card" key={provider.id}><h3>{provider.name}</h3><p>{provider.services.join(', ')} · {provider.area} · {provider.delivery}</p><p>Phone: {provider.phone} · Hours: {provider.hours || 'unspecified'}</p><div><button type="button" disabled={busy} onClick={() => void decideStatus(provider, 'published')}>Approve after callback</button><button type="button" disabled={busy} onClick={() => void decideStatus(provider, 'rejected')}>Reject</button></div></article>)}</section>
-      <section><h2>Customer reports</h2>{reports.length === 0 ? <p>No open reports loaded.</p> : reports.map(report => <article className="operator-card" key={report.id}><strong>{report.name}</strong><p>{report.reason}</p><p>Phone: {report.phone} · Status: {report.status}</p><small>{new Date(report.created_at).toLocaleString()}</small><div><button type="button" disabled={busy} onClick={() => void resolveReport(report, 'checked')}>Checked, keep listing</button><button type="button" disabled={busy} onClick={() => void resolveReport(report, 'hidden')}>Hide listing</button><button type="button" disabled={busy} onClick={() => void recoverProvider(report.provider_id)}>Recover after callback</button></div></article>)}</section>
+      <section><h2>Pending entries</h2>{providers.length === 0 ? <p>{metrics ? 'No pending entries.' : 'Load entries to review submissions.'}</p> : providers.map(provider => <article className="operator-card" key={provider.id}><h3>{provider.name}</h3><p>{provider.services.join(', ')} · {provider.area} · {provider.delivery}</p><p>Phone: {provider.phone} · Hours: {provider.hours || 'unspecified'}</p><div><button type="button" disabled={busy} onClick={() => void decideStatus(provider, 'published')}>Approve after callback</button><button type="button" disabled={busy} onClick={() => void decideStatus(provider, 'rejected')}>Reject</button></div></article>)}</section>
+      <section><h2>Customer reports</h2>{reports.length === 0 ? <p>{metrics ? 'No open reports.' : 'Load entries to review customer reports.'}</p> : reports.map(report => <article className="operator-card" key={report.id}><strong>{report.name}</strong><p>{report.reason}</p><p>Phone: {report.phone} · Status: {report.status}</p><small>{new Date(report.created_at).toLocaleString()}</small><div><button type="button" disabled={busy} onClick={() => void resolveReport(report, 'checked')}>Checked, keep listing</button><button type="button" disabled={busy} onClick={() => void resolveReport(report, 'hidden')}>Hide listing</button><button type="button" disabled={busy} onClick={() => void recoverProvider(report.provider_id)}>Recover after callback</button></div></article>)}</section>
     </main></div>
 }

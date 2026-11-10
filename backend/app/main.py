@@ -323,7 +323,15 @@ async def provider_turn(
         app.state.store.save_draft(draft)
     fields = draft["fields"]
     if draft["cursor"] >= len(FIELDS):
-        command = {"action": "publish"} if control == "publish" else await app.state.reasoner.provider_command(transcript)
+        if control == "publish":
+            command = {"action": "publish"}
+        elif control and control.startswith("change:"):
+            requested_field = control.removeprefix("change:")
+            if requested_field not in FIELDS:
+                raise ServiceError("Choose a valid listing detail.", 400, "invalid_field")
+            command = {"action": "change", "field": requested_field}
+        else:
+            command = await app.state.reasoner.provider_command(transcript)
         if command["action"] == "publish":
             fields.pop("__review_field", None)
             try:

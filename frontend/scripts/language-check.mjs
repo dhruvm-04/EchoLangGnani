@@ -14,17 +14,24 @@ try {
   const introContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const introPage = await introContext.newPage()
   await introPage.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded' })
+  await introPage.locator('.splash').waitFor()
+  const progressAtStart = await introPage.locator('.splash-progress span').evaluate(element => getComputedStyle(element).transform)
+  await introPage.waitForTimeout(600)
+  const progressAfterDelay = await introPage.locator('.splash-progress span').evaluate(element => getComputedStyle(element).transform)
+  if (progressAtStart === progressAfterDelay) throw new Error('Introduction animation did not advance')
   await introPage.screenshot({ path: '.qa/first-visit-intro.png' })
-  await introPage.getByRole('button', { name: 'Skip' }).click()
+  await introPage.locator('.splash').waitFor({ state: 'hidden' })
   await introPage.locator('.language-grid button').first().waitFor()
   await introPage.reload({ waitUntil: 'domcontentloaded' })
-  if (await introPage.locator('.splash').count()) throw new Error('Introduction repeated after first visit')
+  await introPage.locator('.splash').waitFor()
+  await introPage.locator('.splash').waitFor({ state: 'hidden' })
+  if (await introPage.locator('.language-grid button').count() !== 10) throw new Error('Language picker missing after reloaded intro')
   await introContext.close()
   for (const code of codes) {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
     const page = await context.newPage()
-    await page.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
     await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
+    await page.locator('.splash').waitFor({ state: 'hidden' })
     if (code === 'en-IN') await page.screenshot({ path: '.qa/language-welcome.png', fullPage: true })
     if (await page.locator('.language-grid button').count() !== 10) throw new Error('Language picker does not show ten buttons')
     await page.locator(`.language-grid button[lang="${code.slice(0, 2)}"]`).click()
@@ -35,13 +42,13 @@ try {
     if (geometry.content > geometry.viewport + 1) throw new Error(`Horizontal overflow in ${code}: ${JSON.stringify(geometry)}`)
     if (code === 'ta-IN') { await page.waitForTimeout(800); await page.screenshot({ path: '.qa/tamil-home.png', fullPage: true }) }
     await page.reload({ waitUntil: 'networkidle' })
+    await page.locator('.splash').waitFor({ state: 'hidden' })
     if (await page.locator('.language-grid').count()) throw new Error(`Language picker reappeared for ${code}`)
     await context.close()
   }
 
-  const context = await browser.newContext()
+  const context = await browser.newContext({ reducedMotion: 'reduce' })
   const page = await context.newPage()
-  await page.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
   let startedLanguage = ''
   let resumedLanguage = ''
   let customerLanguage = ''
@@ -59,6 +66,7 @@ try {
     route.fulfill({ json: { draftId: 'language-draft', fields: {}, phase: 'question', field: 'name', replyText: 'உங்கள் பெயர் என்ன?', replyAudioBase64: null } })
   })
   await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'hidden' })
   await page.locator('.language-grid button[lang="hi"]').click()
   await page.getByRole('button', { name: translations['hi-IN'].typeInstead }).click()
   await page.getByLabel(translations['hi-IN'].requestLabel).fill('मुझे प्लंबर चाहिए')

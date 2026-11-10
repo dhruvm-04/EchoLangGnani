@@ -8,14 +8,14 @@ await mkdir(output, { recursive: true })
 const languages = ['bn-IN','en-IN','gu-IN','hi-IN','kn-IN','ml-IN','mr-IN','pa-IN','ta-IN','te-IN']
 
 async function inspect(viewport, name) {
-  const context = await browser.newContext({ viewport })
+  const context = await browser.newContext({ viewport, reducedMotion: 'reduce' })
   const page = await context.newPage()
-  await page.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
   await page.route('**/api/config', route => route.fulfill({ json: {
     languages: languages.map(code => ({ code, name: code })), sttModel: 'prisma-v3.0', ttsModel: 'timbre-v2.5',
     requiresLanguageSelection: false, gnaniKeyConfigured: true, reasoningConfigured: true,
   } }))
   await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'hidden' })
   await page.locator('.language-grid button[lang="en"]').click()
   await page.screenshot({ path: fileURLToPath(new URL(`${name}-dark.png`, output)), fullPage: true })
   await page.getByRole('button', { name: 'Use light mode' }).click()
@@ -54,9 +54,22 @@ async function inspect(viewport, name) {
     const answers = ['Asha Repairs', 'fan repair, mixer repair', 'Nanded', 'home visits', '9876543210', 'weekdays', 'Hindi', 'quote']
     const provider = { id: 'mine', name: answers[0], services: answers[1].split(', '), area: answers[2], delivery: answers[3], phone: answers[4], hours: answers[5], languages: answers[6], price: answers[7], status: 'published', updated_at: '2026-11-07' }
     let step = 0
+    let changingField = ''
     await page.route('**/api/providers/start', route => route.fulfill({ json: { draftId: 'draft-1', fields: {}, phase: 'question', field: fields[0], replyText: 'What should customers call you or your business?', replyAudioBase64: null } }))
     await page.route('**/api/providers/turn', route => {
-      const publish = route.request().postData()?.includes('publish') && step === 8
+      const payload = route.request().postData() || ''
+      const currentFields = () => Object.fromEntries(fields.slice(0, step).map((field, i) => [field, answers[i]]))
+      if (payload.includes('change:phone')) {
+        changingField = 'phone'
+        return route.fulfill({ json: { draftId: 'draft-1', fields: currentFields(), phase: 'question', field: 'phone', replyText: 'What is your phone number?', replyAudioBase64: null } })
+      }
+      if (changingField) {
+        answers[fields.indexOf(changingField)] = '9999999999'
+        provider.phone = '9999999999'
+        changingField = ''
+        return route.fulfill({ json: { draftId: 'draft-1', fields: currentFields(), phase: 'review', field: null, replyText: 'Review your listing.', replyAudioBase64: null } })
+      }
+      const publish = payload.includes('publish') && step === 8
       if (publish) return route.fulfill({ json: { phase: 'published', provider, ownerToken: 'test-owner', replyText: 'Your listing is live in the local directory.', replyAudioBase64: null } })
       step++
       return route.fulfill({ json: { draftId: 'draft-1', fields: Object.fromEntries(fields.slice(0, step).map((field, i) => [field, answers[i]])), phase: step === 8 ? 'review' : 'question', field: step === 8 ? null : fields[step], transcript: answers[step - 1], replyText: step === 8 ? 'Review your listing.' : `What is your ${fields[step]}?`, replyAudioBase64: null } })
@@ -71,6 +84,10 @@ async function inspect(viewport, name) {
     }
     await page.screenshot({ path: fileURLToPath(new URL('mobile-provider-review.png', output)), fullPage: true })
     if (!await page.getByRole('button', { name: 'Publish my listing' }).isVisible()) throw new Error('Provider review missing')
+    await page.getByRole('button', { name: 'Change Phone' }).click()
+    await page.getByLabel('Your answer or update').fill('9999999999')
+    await page.getByRole('button', { name: 'Send answer' }).click()
+    await page.getByText('9999999999').waitFor()
     await page.getByRole('button', { name: 'Publish my listing' }).click()
     await page.waitForTimeout(100)
     if (!await page.getByText('Live in the directory').isVisible()) throw new Error('Published listing missing')
@@ -84,13 +101,25 @@ try {
   await inspect({ width: 390, height: 844 }, 'mobile')
   await inspect({ width: 320, height: 720 }, 'small-mobile')
   await inspect({ width: 1440, height: 900 }, 'desktop')
-  const recoveryContext = await browser.newContext()
+  const recoveryContext = await browser.newContext({ reducedMotion: 'reduce' })
   const recoveryPage = await recoveryContext.newPage()
-  await recoveryPage.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
   await recoveryPage.route('**/api/providers/me', route => route.fulfill({ json: { id: 'recovered', name: 'Asha', services: ['repair'], area: 'Nanded', delivery: 'home visits', phone: '9876543210', hours: '', languages: '', price: '', status: 'published', updated_at: '2026-11-09' } }))
   await recoveryPage.goto('http://127.0.0.1:5173/#recover=sample-token', { waitUntil: 'networkidle' })
+  await recoveryPage.locator('.splash').waitFor({ state: 'hidden' })
   const recovered = await recoveryPage.evaluate(() => ({ token: localStorage.getItem('echolang-owner-token'), hash: location.hash }))
   if (recovered.token !== 'sample-token' || recovered.hash) throw new Error('Recovery link was not saved and removed from the address bar')
   await recoveryContext.close()
+  const operatorContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
+  const operatorPage = await operatorContext.newPage()
+  await operatorPage.route('**/api/admin/pending', route => route.fulfill({ json: { providers: [] } }))
+  await operatorPage.route('**/api/admin/reports', route => route.fulfill({ json: { reports: [] } }))
+  await operatorPage.route('**/api/admin/metrics', route => route.fulfill({ json: { counts: {} } }))
+  await operatorPage.goto('http://127.0.0.1:5173/?operator=1', { waitUntil: 'networkidle' })
+  if (!await operatorPage.getByText('Load entries to review submissions.').isVisible()) throw new Error('Operator unloaded state missing')
+  await operatorPage.getByLabel('Operator key').fill('test-key')
+  await operatorPage.getByRole('button', { name: 'Load entries' }).click()
+  await operatorPage.getByRole('status').getByText('Directory review is up to date.').waitFor()
+  if (!await operatorPage.getByText('No pending entries.').isVisible()) throw new Error('Operator empty state missing')
+  await operatorContext.close()
   console.log('Visual checks passed at mobile and desktop sizes.')
 } finally { await browser.close() }

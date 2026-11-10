@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#161514">
+  <title>EchoLang — Competition pitch</title>
+  <meta name="description" content="EchoLang competition pitch slides, designed to sit beside the live phone demo.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      --bg: #161514;
+      --panel: #242321;
+      --panel-strong: #2b2927;
+      --ink: #f5f2ec;
+      --muted: #b8b3ac;
+      --faint: #89847e;
+      --line: #494540;
+      --line-soft: #383530;
+      --accent: #e8c5e2;
+      --accent-2: #c5a3c4;
+      --accent-wash: rgba(232,197,226,.1);
+      --warm: #f0dba8;
+      --mint: #b8e0c6;
+      --button: #f4f0e8;
+      --button-ink: #24211f;
+      --shadow: 0 30px 95px rgba(0,0,0,.22);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; min-height: 100svh; background: var(--bg); color: var(--ink); }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    [hidden] { display: none !important; }
+    .deck {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      background: radial-gradient(circle at 83% 37%, var(--accent-wash), transparent 30%), var(--bg);
+      transition: background .3s, color .3s;
+    }
+    .deck::before {
+      content: '';
+      position: absolute;
+      width: 38vw;
+      height: 38vw;
+      right: -19vw;
+      top: 12vh;
+      border: 1px solid var(--line-soft);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: .65;
+      z-index: -1;
+    }
+    .stage { flex: 1; width: min(100%,1500px); margin: 0 auto; display: grid; align-items: stretch; }
+    .slide {
+      width: 100%;
+      min-height: 100svh;
+      padding: clamp(42px,6vh,82px) clamp(25px,5.2vw,78px);
+      display: grid;
+      align-items: center;
+      animation: reveal .55s cubic-bezier(.2,.7,.2,1) both;
+    }
+    .slide-content { width: 100%; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-weight: 500; letter-spacing: -.07em; }
+    h1 { font-size: clamp(52px,6.8vw,108px); line-height: .99; margin-bottom: 30px; }
+    h2 { font-size: clamp(44px,5.4vw,82px); line-height: 1.03; margin-bottom: 25px; }
+    h1 em, h2 em, .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; letter-spacing: -.035em; color: var(--accent); }
+    .lead { color: var(--muted); font-size: clamp(16px,1.45vw,21px); line-height: 1.55; max-width: 520px; }
+    .fine { color: var(--faint); font-size: 12px; line-height: 1.5; }
+    .cover-grid { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(300px,.88fr); gap: clamp(28px,5vw,80px); align-items: center; }
+    .cover-copy { position: relative; z-index: 1; }
+    .cover-brand { display: flex; align-items: center; gap: clamp(13px,1.5vw,23px); }
+    .cover-mark { width: clamp(47px,5vw,70px); height: clamp(47px,5vw,70px); flex: none; border: 2px solid var(--ink); border-radius: 18px; transform: rotate(-14deg); display: grid; place-items: center; }
+    .cover-mark::after { content: ''; width: 32%; height: 32%; border: 1.5px solid var(--ink); border-radius: 50%; }
+    .cover-title { font-size: clamp(68px,8.5vw,136px); letter-spacing: -.085em; line-height: 1; margin: 0; white-space: nowrap; }
+    .cover-title em { font-family: inherit; font-style: normal; font-weight: 400; letter-spacing: -.085em; }
+    .cover-tagline { font-family: 'DM Serif Display',Georgia,serif; font-style: italic; color: var(--accent); font-size: clamp(27px,3.1vw,46px); line-height: 1.15; margin: 30px 0 0; }
+    .entry-label { color: var(--muted); font-size: clamp(13px,1.25vw,17px); margin: 25px 0 0; }
+    .presenter { display: grid; gap: 6px; max-width: 490px; border-top: 1px solid var(--line); margin-top: clamp(50px,7vh,90px); padding-top: 24px; }
+    .presenter strong { font-size: clamp(20px,2vw,29px); font-weight: 600; letter-spacing: -.04em; }
+    .presenter span { color: var(--muted); font-size: clamp(14px,1.2vw,17px); line-height: 1.5; }
+    .presenter .website { color: var(--accent); margin-top: 7px; font-weight: 600; }
+    .cover-art { height: min(68vh,570px); min-height: 390px; display: grid; place-items: center; position: relative; }
+    .cover-ring { width: min(100%,520px); aspect-ratio: 1; border: 1px solid var(--line-soft); border-radius: 50%; position: absolute; }
+    .cover-ring::before, .cover-ring::after { content: ''; position: absolute; border: 1px solid var(--line-soft); border-radius: 50%; }
+    .cover-ring::before { inset: 11%; }
+    .cover-ring::after { inset: 22%; }
+    .cover-orb { width: clamp(180px,23vw,320px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 25%,#f7e9f3,#d7b6d4 43%,#9a799a 100%); box-shadow: 0 35px 110px rgba(185,126,181,.27), inset -23px -19px 40px rgba(65,38,65,.22); animation: float 5s ease-in-out infinite; position: relative; }
+    .cover-orb::after { content: ''; position: absolute; inset: 37%; border: 2px solid #342a36; border-radius: 50%; opacity: .55; }
+    .cover-spark { position: absolute; right: 2%; top: 12%; color: var(--accent); font-family: 'DM Serif Display',Georgia,serif; font-size: clamp(50px,6vw,90px); line-height: 1; transform: rotate(18deg); }
+    .hero-grid, .gap-grid, .demo-grid, .stack-grid { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(320px,.92fr); gap: clamp(34px,4.5vw,75px); align-items: center; }
+    .hero-copy { position: relative; z-index: 1; }
+    .hero-copy .lead { max-width: 500px; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--line); background: var(--panel); border-radius: 100px; padding: 9px 13px; color: var(--muted); font-size: 11px; font-weight: 700; margin-top: 24px; }
+    .hero-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 11px var(--mint); }
+    .signal-field { height: min(58vh,540px); min-height: 370px; position: relative; display: grid; place-items: center; }
+    .signal-ring { position: absolute; width: 94%; max-width: 510px; aspect-ratio: 1; border: 1px solid var(--line-soft); border-radius: 50%; }
+    .signal-ring::before, .signal-ring::after { content: ''; position: absolute; inset: 12%; border: 1px solid var(--line-soft); border-radius: 50%; }
+    .signal-ring::after { inset: 25%; }
+    .signal-orb { width: clamp(150px,18vw,265px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 24%,#f7e9f3,#d7b6d4 42%,#9a799a 100%); box-shadow: 0 35px 100px rgba(185,126,181,.28), inset -20px -18px 35px rgba(65,38,65,.24); position: relative; animation: float 5s ease-in-out infinite; }
+    .signal-orb::after { content: ''; position: absolute; inset: 34%; border: 2px solid #342a36; border-radius: 50%; opacity: .55; }
+    .quote-card { position: absolute; z-index: 1; width: min(78%,320px); padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); }
+    .quote-card small { display: block; margin-bottom: 9px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .quote-card strong { font-size: clamp(14px,1.2vw,17px); font-weight: 500; line-height: 1.4; }
+    .quote-card.top { top: 1%; right: 0; transform: rotate(3deg); }
+    .quote-card.bottom { bottom: 1%; left: 0; transform: rotate(-3deg); }
+    .gap-grid { grid-template-columns: minmax(0,.95fr) minmax(350px,1.05fr); }
+    .gap-grid .lead { max-width: 490px; }
+    .gap-visual { padding: 24px; border: 1px solid var(--line); border-radius: 26px; background: linear-gradient(150deg,var(--accent-wash),transparent 55%),var(--panel); box-shadow: var(--shadow); }
+    .gap-person { min-height: 120px; display: flex; align-items: center; gap: 20px; }
+    .gap-person + .gap-person { border-top: 1px solid var(--line-soft); }
+    .person-icon { width: 56px; height: 56px; flex: none; display: grid; place-items: center; border-radius: 17px; background: var(--accent-wash); color: var(--accent); font-family: 'DM Serif Display',Georgia,serif; font-size: 28px; }
+    .gap-person:nth-of-type(3) .person-icon { color: var(--warm); background: rgba(240,219,168,.1); }
+    .gap-person small { display: block; color: var(--faint); font-size: 10px; font-weight: 700; letter-spacing: .18em; margin-bottom: 6px; text-transform: uppercase; }
+    .gap-person strong { display: block; font-size: clamp(17px,1.5vw,22px); font-weight: 500; line-height: 1.3; }
+    .gap-bridge { height: 64px; display: flex; align-items: center; gap: 15px; padding-left: 28px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .17em; text-transform: uppercase; }
+    .gap-bridge::before { content: ''; height: 100%; width: 1px; background: linear-gradient(var(--accent),transparent); }
+    .demo-grid { grid-template-columns: minmax(0,.78fr) minmax(360px,1.22fr); }
+    .demo-copy h2 { max-width: 630px; }
+    .demo-cue { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; margin: 30px 0 0; }
+    .demo-steps { display: grid; gap: 14px; }
+    .demo-step { display: grid; grid-template-columns: 52px minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); box-shadow: var(--shadow); }
+    .demo-step .number { font-family: 'DM Serif Display',Georgia,serif; color: var(--accent); font-size: 32px; }
+    .demo-step:nth-child(2) .number { color: var(--warm); }
+    .demo-step small { color: var(--faint); display: block; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 5px; }
+    .demo-step strong { font-size: clamp(18px,1.6vw,23px); font-weight: 500; }
+    .demo-step .arrow { color: var(--accent); font-size: 23px; }
+    .demo-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 24px; color: var(--muted); font-size: 12px; }
+    .demo-flow span { border: 1px solid var(--line); border-radius: 100px; padding: 8px 12px; }
+    .demo-flow b { color: var(--accent); font-weight: 500; }
+    .technical-head { display: flex; align-items: end; justify-content: space-between; gap: 26px; margin-bottom: 25px; }
+    .technical-head h2 { font-size: clamp(46px,5.2vw,78px); margin: 0; }
+    .technical-head .lead { max-width: 275px; margin: 0 0 5px; }
+    .flow-row { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; }
+    .flow-node { min-height: 133px; position: relative; padding: 17px 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); }
+    .flow-node:not(:last-child)::after { content: '→'; position: absolute; right: -19px; top: 50%; transform: translateY(-50%); color: var(--accent); font-size: 20px; z-index: 1; }
+    .flow-node small, .path-card small { display: block; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .16em; margin-bottom: 22px; }
+    .flow-node:nth-child(3) small { color: var(--warm); }
+    .flow-node:nth-child(4) small { color: var(--mint); }
+    .flow-node strong { display: block; font-size: clamp(15px,1.45vw,19px); font-weight: 600; letter-spacing: -.04em; line-height: 1.18; }
+    .flow-node p { color: var(--muted); font-size: 11px; margin: 8px 0 0; line-height: 1.35; }
+    .flow-branch-label { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--faint); font-size: 10px; font-weight: 700; letter-spacing: .2em; margin: 16px 0 12px; }
+    .flow-branch-label::before, .flow-branch-label::after { content: ''; width: 32px; height: 1px; background: var(--line); }
+    .path-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
+    .path-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 12px; padding: 16px 19px; border: 1px solid var(--line); border-radius: 17px; background: linear-gradient(120deg,var(--accent-wash),transparent 65%),var(--panel); }
+    .path-card small { grid-column: 1 / -1; margin: 0 0 4px; }
+    .path-card:nth-child(2) small { color: var(--warm); }
+    .path-card strong { font-size: clamp(15px,1.35vw,18px); font-weight: 600; letter-spacing: -.025em; }
+    .path-card span { color: var(--muted); font-size: 11px; text-align: right; align-self: center; }
+    .voice-return { display: flex; align-items: center; gap: 15px; margin-top: 13px; padding: 12px 17px; border: 1px solid var(--line); border-radius: 16px; color: var(--muted); background: var(--panel); font-size: 12px; }
+    .voice-return b { color: var(--mint); font-family: 'DM Serif Display',Georgia,serif; font-size: 24px; line-height: 1; font-weight: 400; }
+    .voice-return strong { color: var(--ink); font-size: 14px; white-space: nowrap; }
+    .stack-line { color: var(--faint); font-size: 11px; margin: 16px 0 0; line-height: 1.5; }
+    .stack-line strong { color: var(--muted); margin-right: 8px; }
+    .closing { max-width: 1100px; }
+    .closing h2 { font-size: clamp(54px,7.2vw,108px); margin-bottom: 33px; }
+    .proof-row { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 44px 0 25px; }
+    .proof { border-top: 1px solid var(--line); padding-top: 15px; }
+    .proof small { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .18em; }
+    .proof strong { display: block; font-size: clamp(17px,1.75vw,25px); font-weight: 500; margin-top: 13px; letter-spacing: -.035em; }
+    .closing-note { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 50% { transform: translateY(-12px); } }
+    @media (max-width: 1080px) {
+      .cover-grid, .hero-grid, .gap-grid, .demo-grid { gap: 25px; }
+    }
+    @media (max-width: 800px) {
+      .slide { padding-top: 38px; padding-bottom: 38px; }
+      .cover-grid, .hero-grid, .gap-grid, .demo-grid { grid-template-columns: 1fr; }
+      .cover-art { height: 290px; min-height: 290px; max-width: 520px; width: 100%; margin: 0 auto; }
+      .cover-orb { width: 180px; }
+      .signal-field { height: 320px; min-height: 320px; max-width: 530px; width: 100%; margin: 0 auto; }
+      .signal-orb { width: 170px; }
+      .quote-card { padding: 13px 16px; }
+      .gap-visual { max-width: 650px; width: 100%; }
+      .demo-steps { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .demo-step { grid-template-columns: 1fr; gap: 8px; }
+      .demo-step .arrow { display: none; }
+      .technical-head { display: block; }
+      .technical-head .lead { max-width: 560px; margin-top: 12px; }
+      .flow-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .flow-node:nth-child(2)::after { display: none; }
+      .flow-node { min-height: 114px; }
+      .flow-node small { margin-bottom: 12px; }
+      .proof-row { margin-top: 30px; }
+    }
+    @media (max-width: 570px) {
+      .slide { min-height: 100svh; }
+      .cover-brand { align-items: center; }
+      .cover-title { font-size: clamp(47px,13vw,71px); }
+      .cover-mark { width: 38px; height: 38px; border-radius: 12px; }
+      .cover-tagline { margin-top: 23px; }
+      .presenter { margin-top: 42px; }
+      .cover-art { height: 220px; min-height: 220px; }
+      .cover-orb { width: 145px; }
+      h1 { font-size: clamp(48px,12vw,70px); }
+      h2 { font-size: clamp(43px,10vw,60px); }
+      .signal-field { height: 290px; min-height: 290px; }
+      .quote-card { width: 76%; }
+      .quote-card strong { font-size: 13px; }
+      .gap-person { min-height: 95px; }
+      .gap-bridge { height: 42px; }
+      .demo-step { padding: 15px; }
+      .demo-step strong { font-size: 17px; }
+      .technical-head h2 { font-size: clamp(42px,10vw,58px); }
+      .flow-row, .path-row { grid-template-columns: 1fr; gap: 10px; }
+      .flow-node { min-height: 94px; }
+      .flow-node small { margin-bottom: 6px; }
+      .flow-node::after { display: none; }
+      .path-card { grid-template-columns: 1fr; }
+      .path-card span { text-align: left; }
+      .voice-return { flex-wrap: wrap; gap: 5px 10px; }
+      .proof-row { gap: 7px; }
+      .proof strong { font-size: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+    @media print {
+      :root { color-scheme: light; }
+      body, .deck { background: white !important; color: #24211f !important; }
+      .stage { display: block; }
+      .slide, .slide[hidden] { display: grid !important; min-height: 100vh; page-break-after: always; break-after: page; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <main class="stage" id="stage">
+      <section class="slide" data-slide="0" aria-label="Slide 1: Title and presenter">
+        <div class="slide-content cover-grid">
+          <div class="cover-copy">
+            <div class="cover-brand"><span class="cover-mark" aria-hidden="true"></span><h1 class="cover-title">echo<em>lang.</em></h1></div>
+            <p class="cover-tagline">Every neighbourhood has a voice.</p>
+            <p class="entry-label">Gnani Internship Challenge Entry 2026</p>
+            <div class="presenter">
+              <strong>Dhruv Maheshwari</strong>
+              <span>4th Year BTech CSE Student<br>at PES University, Bengaluru</span>
+              <span class="website">dhruvmaheshwari.in</span>
+            </div>
+          </div>
+          <div class="cover-art" aria-hidden="true"><div class="cover-ring"></div><div class="cover-orb"></div><span class="cover-spark">✳</span></div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="1" aria-label="Slide 2: EchoLang idea" hidden>
+        <div class="slide-content hero-grid">
+          <div class="hero-copy">
+            <h1>Local help.<br><em>In your words.</em></h1>
+            <p class="lead">A voice-first directory for people who need help - and the neighbours who offer it.</p>
+            <span class="hero-tag"><i aria-hidden="true"></i> Built with Gnani AI speech</span>
+          </div>
+          <div class="signal-field" aria-hidden="true">
+            <div class="signal-ring"></div><div class="signal-orb"></div>
+            <div class="quote-card top"><small>Neighbour</small><strong>“I need fan repair in Udaipur.”</strong></div>
+            <div class="quote-card bottom"><small>Local worker</small><strong>“I repair fans in Udaipur.”</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="2" aria-label="Slide 3: The local discovery gap" hidden>
+        <div class="slide-content gap-grid">
+          <div>
+            <h2>Two streets away.<br><em>Still invisible.</em></h2>
+            <p class="lead">A skilled worker can be nearby, yet missing from the places people search.</p>
+          </div>
+          <div class="gap-visual" aria-label="A worker and customer connected through conversation">
+            <div class="gap-person"><span class="person-icon" aria-hidden="true">✳</span><span><small>Local worker</small><strong>“I can repair it.”</strong></span></div>
+            <div class="gap-bridge"><span>EchoLang connects the voices</span></div>
+            <div class="gap-person"><span class="person-icon" aria-hidden="true">⌕</span><span><small>Neighbour</small><strong>“I need help nearby.”</strong></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="3" aria-label="Slide 4: Live demo" hidden>
+        <div class="slide-content demo-grid">
+          <div class="demo-copy">
+            <h2>Two voices.<br><em>One directory.</em></h2>
+            <p class="lead">Follow the phone demo beside this slide.</p>
+            <p class="demo-cue">Watch it happen <span aria-hidden="true">↗</span></p>
+          </div>
+          <div>
+            <div class="demo-steps">
+              <div class="demo-step"><span class="number">01</span><span><small>Offer a service</small><strong>Speak → review → publish</strong></span><span class="arrow" aria-hidden="true">↗</span></div>
+              <div class="demo-step"><span class="number">02</span><span><small>Find help</small><strong>Ask → confirm → call</strong></span><span class="arrow" aria-hidden="true">↗</span></div>
+            </div>
+            <div class="demo-flow"><span>10 language choices</span><b>✳</b><span>Large controls</span><b>✳</b><span>Spoken replies</span></div>
+            <p class="fine" style="margin:18px 0 0">The provider shown in this demo uses sample contact details.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="4" aria-label="Slide 5: Technical flow and stack" hidden>
+        <div class="slide-content technical">
+          <div class="technical-head">
+            <h2>From voice to<br><em>local action.</em></h2>
+            <p class="lead">One pipeline powers both sides of the directory.</p>
+          </div>
+          <div class="flow-row" aria-label="Audio flows through the web app, speech recognition, reasoning, and backend">
+            <div class="flow-node"><small>01 / INPUT</small><strong>React mobile web</strong><p>TypeScript · microphone</p></div>
+            <div class="flow-node"><small>02 / TRANSCRIBE</small><strong>Gnani Prisma v3.0</strong><p>Speech → text</p></div>
+            <div class="flow-node"><small>03 / UNDERSTAND</small><strong>GPT-OSS 120B</strong><p>Groq · service + place</p></div>
+            <div class="flow-node"><small>04 / ROUTE</small><strong>Python FastAPI</strong><p>Confirm · manage state</p></div>
+          </div>
+          <div class="flow-branch-label">TWO PATHS</div>
+          <div class="path-row">
+            <div class="path-card"><small>WORKER</small><strong>Answer → review → publish</strong><span>SQLite directory write</span></div>
+            <div class="path-card"><small>NEIGHBOUR</small><strong>Ask → confirm → find</strong><span>SQLite search · Call</span></div>
+          </div>
+          <div class="voice-return"><b aria-hidden="true">◌</b><strong>Gnani Timbre v3.0</strong><span>Speaks the confirmation and result in the chosen language.</span></div>
+          <p class="stack-line"><strong>Stack</strong> React · TypeScript · Python · FastAPI · SQLite · Gnani Prisma + Timbre · Groq GPT-OSS 120B</p>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="5" aria-label="Slide 6: Closing" hidden>
+        <div class="slide-content closing">
+          <h2>Local help,<br><em>one conversation away.</em></h2>
+          <p class="lead">A skilled neighbour should not be invisible because they never filled out a form.</p>
+          <div class="proof-row" aria-label="Questions for a one-town pilot">
+            <div class="proof"><small>01</small><strong>Can workers create accurate entries?</strong></div>
+            <div class="proof"><small>02</small><strong>Can neighbours find a useful match?</strong></div>
+            <div class="proof"><small>03</small><strong>Can they make the call?</strong></div>
+          </div>
+          <p class="closing-note">The next proof is a small pilot in one town. This demo uses sample directory details.</p>
+        </div>
+      </section>
+    </main>
+
+  </div>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('[data-slide]')];
+      let current = 0;
+      function show(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, position) => {
+          slide.hidden = position !== current;
+          slide.setAttribute('aria-hidden', String(position !== current));
+        });
+        history.replaceState(null, '', `#${current + 1}`);
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+      window.addEventListener('keydown', event => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.key === 'ArrowRight') { event.preventDefault(); show(current + 1); }
+        if (event.key === 'ArrowLeft') { event.preventDefault(); show(current - 1); }
+      });
+      window.addEventListener('hashchange', () => {
+        const slide = Number(location.hash.slice(1));
+        if (Number.isInteger(slide) && slide >= 1 && slide <= slides.length) show(slide - 1);
+      });
+      window.addEventListener('resize', () => window.scrollTo(0, 0));
+      const initial = Number(location.hash.slice(1));
+      show(Number.isInteger(initial) && initial >= 1 && initial <= slides.length ? initial - 1 : 0);
+    })();
+  </script>
+</body>
+</html>
