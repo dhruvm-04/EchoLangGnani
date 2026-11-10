@@ -1,6 +1,8 @@
 # EchoLang
 
-[Try the live demo](https://www.dhruvmaheshwari.in/echolang/) · [Read the one-page solution pitch](SOLUTION_PITCH.pdf) · [View the presentation](presentation.html) · [See the Mermaid flowchart](SOLUTION_FLOW.mmd)
+· [Try the live demo here](https://www.dhruvmaheshwari.in/echolang/) _Might take up to a minute to load since the instance needs to spin up._\
+· [Read the one-page solution pitch](SOLUTION_PITCH.pdf)\
+· [View the presentation](presentation.html)
 
 EchoLang is a local services directory designed for smaller Indian cities and towns, including tier-2 and tier-3 areas. The search flow uses basic phone actions: choose a language, speak a need and place, confirm what the app heard, and listen to local matches. It is intended for people who can use a phone but are less comfortable with search terms or long forms. Workers can create and manage listings through short voice or text prompts.
 
@@ -61,6 +63,7 @@ backend/.venv/Scripts/python backend/scripts/seed_demo.py
 ```
 
 Running the command again will not create duplicates. It also removes old demo entries that are no longer in the seed set; real provider entries are left alone.
+<<<<<<< HEAD
 
 ## Deploy the demo
 
@@ -95,3 +98,5 @@ backend/.venv/Scripts/python backend/scripts/backup_directory.py
 ```
 
 Backups go to `backend/data/backups/` and contain provider contact details. If you changed `ECHOLANG_DB_PATH`, set it in the shell before running the backup command.
+=======
+>>>>>>> 826c9658e3414ead59a0ce6cbcfd2e829f7fac59
