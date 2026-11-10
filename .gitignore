@@ -18,5 +18,6 @@ backend/data/
 coverage/
 .DS_Store
 Thumbs.db
-docs/
-presentation.html
+assets/fonts/
+scripts/build_solution_pitch.py
+scripts/prepare_pitch_fonts.py

@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt \
 COPY backend/app /app/backend/app
 COPY --from=frontend-build /build/frontend/dist /app/frontend/dist
 COPY presentation.html /app/presentation.html
+COPY echolang-logo.svg /app/echolang-logo.svg
 USER echolang
 EXPOSE 10000
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

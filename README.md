@@ -1,6 +1,8 @@
 # EchoLang
 
-EchoLang helps people find local services by speaking in their own language. A worker can create a listing by answering a few questions aloud. A neighbour can describe the help they need, hear the request read back, and call a matching provider.
+[Try the live demo](https://www.dhruvmaheshwari.in/echolang/) · [Read the one-page solution pitch](SOLUTION_PITCH.pdf) · [View the presentation](presentation.html) · [See the Mermaid flowchart](SOLUTION_FLOW.mmd)
+
+EchoLang is a local services directory designed for smaller Indian cities and towns, including tier-2 and tier-3 areas. The search flow uses basic phone actions: choose a language, speak a need and place, confirm what the app heard, and listen to local matches. It is intended for people who can use a phone but are less comfortable with search terms or long forms. Workers can create and manage listings through short voice or text prompts.
 
 The directory searches its own SQLite listings. The demo starts with 200 fictional providers across 88 Indian cities and 31 service types, so you can try a search immediately. It does not pull results from Google or another service.
 
@@ -70,7 +72,7 @@ If you want submissions held for review, set both `ECHOLANG_REQUIRE_APPROVAL=1` 
 
 A listing is contact information, not a verified recommendation. Demo entries are named `Demo — ...` and use nonworking `000` numbers; their call buttons are disabled. To run a real pilot, set `ECHOLANG_SEED_DEMO=0` and use a fresh database without the samples. The app does not confirm that a phone number belongs to a worker or that a job was completed. The operator can call a provider, review reports, and issue a new access link, but those checks are manual.
 
-The browser stores an owner token so a provider can return to their listing. Anyone with that token or its recovery link can change the listing. Audio recordings are not kept by the app; published listing details, including phone numbers, are stored in SQLite. See the [pilot notes](docs/pilot-research-and-measures.md) for the questions this demo still needs to answer.
+The browser stores an owner token so a provider can return to their listing. Anyone with that token or its recovery link can change the listing. Audio recordings are not kept by the app; published listing details, including phone numbers, are stored in SQLite. A pilot should check whether workers can manage listings and customers can find and call a provider without typing, using the languages, accents, and phones common in that area.
 
 ## Checks
 

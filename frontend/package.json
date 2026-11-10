@@ -8,8 +8,6 @@
     "dev:lan": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "qa:visual": "node scripts/preview-check.mjs",
-    "qa:live": "node scripts/live-check.mjs",
     "qa:languages": "node scripts/language-check.mjs"
   },
   "dependencies": {
