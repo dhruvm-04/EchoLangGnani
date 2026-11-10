@@ -4,7 +4,9 @@
 
 EchoLang is a local services directory designed for smaller Indian cities and towns, including tier-2 and tier-3 areas. The search flow uses basic phone actions: choose a language, speak a need and place, confirm what the app heard, and listen to local matches. It is intended for people who can use a phone but are less comfortable with search terms or long forms. Workers can create and manage listings through short voice or text prompts.
 
-The directory searches its own SQLite listings. The demo starts with 200 fictional providers across 88 Indian cities and 31 service types, so you can try a search immediately. It does not pull results from Google or another service.
+The directory searches its own SQLite listings. The demo starts with six fictional providers in six Indian cities, so you can try a search immediately. It does not pull results from Google or another service.
+
+Try "fan repair in Udaipur," "plumber in Nanded," "electrician in Delhi," "AC repair in Chennai," "phone repair in Kolkata," or "pest control in Kochi."
 
 ## What the demo includes
 
@@ -64,7 +66,7 @@ Running the command again will not create duplicates. It also removes old demo e
 
 The repository includes a [Render Blueprint](render.yaml) and a [Dockerfile](Dockerfile). Connect the repository to Render as a Blueprint and provide `GNANI_API_KEY` and `ECHOLANG_LLM_API_KEY` as secret environment values. If you already created the service, add the keys in its environment settings. The Docker build compiles the frontend, then serves the app and API from FastAPI on the same origin. The presentation is available at `/presentation.html`.
 
-This deployment is meant for a demo. It automatically reloads the sample listings at startup, but its SQLite database is set to `/tmp/echolang.sqlite3`. [Render's free web services use an ephemeral filesystem](https://render.com/docs/free), so real listings and drafts can disappear when the service spins down, restarts, or is redeployed. Use durable storage before collecting real provider data. Speech and reasoning requests also use your API credits.
+This deployment is meant for a demo. It reloads the six sample listings at startup, but its SQLite database is set to `/tmp/echolang.sqlite3`. [Render's free web services use an ephemeral filesystem](https://render.com/docs/free), so real listings and drafts can disappear when the service spins down, restarts, or is redeployed. Use durable storage before collecting real provider data. Speech and reasoning requests also use your API credits.
 
 If you want submissions held for review, set both `ECHOLANG_REQUIRE_APPROVAL=1` and a strong `ECHOLANG_ADMIN_KEY` on the backend. The operator page is at `/?operator=1`. Without those settings, a worker can publish a listing after reviewing it themselves.
 
