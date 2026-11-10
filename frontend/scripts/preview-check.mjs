@@ -10,6 +10,7 @@ const languages = ['bn-IN','en-IN','gu-IN','hi-IN','kn-IN','ml-IN','mr-IN','pa-I
 async function inspect(viewport, name) {
   const context = await browser.newContext({ viewport })
   const page = await context.newPage()
+  await page.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
   await page.route('**/api/config', route => route.fulfill({ json: {
     languages: languages.map(code => ({ code, name: code })), sttModel: 'prisma-v3.0', ttsModel: 'timbre-v2.5',
     requiresLanguageSelection: false, gnaniKeyConfigured: true, reasoningConfigured: true,
@@ -85,6 +86,7 @@ try {
   await inspect({ width: 1440, height: 900 }, 'desktop')
   const recoveryContext = await browser.newContext()
   const recoveryPage = await recoveryContext.newPage()
+  await recoveryPage.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
   await recoveryPage.route('**/api/providers/me', route => route.fulfill({ json: { id: 'recovered', name: 'Asha', services: ['repair'], area: 'Nanded', delivery: 'home visits', phone: '9876543210', hours: '', languages: '', price: '', status: 'published', updated_at: '2026-11-09' } }))
   await recoveryPage.goto('http://127.0.0.1:5173/#recover=sample-token', { waitUntil: 'networkidle' })
   const recovered = await recoveryPage.evaluate(() => ({ token: localStorage.getItem('echolang-owner-token'), hash: location.hash }))

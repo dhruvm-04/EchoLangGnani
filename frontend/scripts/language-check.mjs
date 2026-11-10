@@ -11,9 +11,19 @@ for (const code of codes) {
 
 const browser = await chromium.launch({ channel: 'msedge', headless: true })
 try {
+  const introContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
+  const introPage = await introContext.newPage()
+  await introPage.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded' })
+  await introPage.screenshot({ path: '.qa/first-visit-intro.png' })
+  await introPage.getByRole('button', { name: 'Skip' }).click()
+  await introPage.locator('.language-grid button').first().waitFor()
+  await introPage.reload({ waitUntil: 'domcontentloaded' })
+  if (await introPage.locator('.splash').count()) throw new Error('Introduction repeated after first visit')
+  await introContext.close()
   for (const code of codes) {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
     const page = await context.newPage()
+    await page.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
     await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
     if (code === 'en-IN') await page.screenshot({ path: '.qa/language-welcome.png', fullPage: true })
     if (await page.locator('.language-grid button').count() !== 10) throw new Error('Language picker does not show ten buttons')
@@ -31,6 +41,7 @@ try {
 
   const context = await browser.newContext()
   const page = await context.newPage()
+  await page.addInitScript(() => localStorage.setItem('echolang-intro-seen', '1'))
   let startedLanguage = ''
   let resumedLanguage = ''
   let customerLanguage = ''

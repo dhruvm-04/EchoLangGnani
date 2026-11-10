@@ -24,6 +24,8 @@ npm run dev
 
 Open http://127.0.0.1:5173. The backend health endpoint is at http://127.0.0.1:8000/api/health. API documentation is at http://127.0.0.1:8000/docs. The interface shows when speech or reasoning is not configured. API keys stay in the backend environment. Gnani handles speech recognition and synthesis; an OpenAI-compatible `/chat/completions` endpoint handles interpretation and localized replies. These services process spoken content, so obtain consent before using real personal details.
 
+To open the interface on a phone connected to the same Wi-Fi, run `npm run dev:lan` in `frontend` and open `http://<computer-Wi-Fi-IP>:5173` on the phone. The backend can stay on `127.0.0.1:8000` because Vite proxies `/api` requests. Allow Node.js through Windows Firewall for the active network profile if the phone cannot reach the page. A LAN HTTP address does not provide the secure context required for browser microphone access; use an HTTPS address for the voice flows on a phone.
+
 The frontend proxies `/api` to port 8000 in local development. To use different frontend origins, set `ECHOLANG_CORS_ORIGINS` as a comma-separated list. The local database defaults to `backend/data/echolang.sqlite3`; set `ECHOLANG_DB_PATH` to place it elsewhere. The database, backups, `.env`, dependencies, and build output are excluded from Git.
 
 ## Use the directory

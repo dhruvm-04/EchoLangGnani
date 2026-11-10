@@ -33,6 +33,7 @@ function friendlyError(language: string, code?: string): string {
 
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('echolang-theme') === 'light' ? 'light' : 'dark')
+  const [showSplash, setShowSplash] = useState(() => !localStorage.getItem('echolang-intro-seen') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [config, setConfig] = useState<Config | null>(null)
   const [language, setLanguage] = useState<LanguageCode>(() => {
     const saved = localStorage.getItem('echolang-language') || ''
@@ -74,6 +75,11 @@ function App() {
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('echolang-theme', theme) }, [theme])
   useEffect(() => { document.documentElement.lang = language.slice(0, 2) }, [language])
+  useEffect(() => {
+    if (!showSplash) return
+    const timer = window.setTimeout(() => { localStorage.setItem('echolang-intro-seen', '1'); setShowSplash(false) }, 2400)
+    return () => window.clearTimeout(timer)
+  }, [showSplash])
   useEffect(() => {
     fetch('/api/config').then(async response => {
       if (!response.ok) throw new Error('offline')
@@ -322,9 +328,12 @@ function App() {
     setTurn(null); setHeardText(''); setAudioUrl(''); setError(''); setNotice('')
   }
 
-  const voiceReady = Boolean(config?.gnaniKeyConfigured && config?.reasoningConfigured)
+  const voiceReady = Boolean(config?.gnaniKeyConfigured && config?.reasoningConfigured && window.isSecureContext && navigator.mediaDevices?.getUserMedia)
+  useEffect(() => { if (config && !voiceReady) setShowType(true) }, [config, voiceReady])
   const status = ui(language, !config ? 'connecting' : !voiceReady ? 'voiceOffline' : recording ? 'listening' : busy ? 'pleaseWait' : mode === 'offer' ? 'offerService' : turn?.state.phase === 'done' ? 'searchReady' : 'readyToListen')
-  const guidance = !config ? ui(language, 'oneMoment') : !voiceReady ? ui(language, 'voiceUnavailable') : recording ? ui(language, 'speakStop') : busy ? ui(language, 'pleaseWait') : mode === 'offer' ? (editProposal?.replyText || (providerTurn?.phase === 'published' ? '' : providerTurn?.replyText) || (myListing ? ui(language, 'editGuide') : ui(language, 'startGuide'))) : turn?.replyText || ui(language, conversation.phase === 'awaiting_location' ? 'speakPlace' : 'speakNeed')
+  const flowGuidance = mode === 'offer' ? (editProposal?.replyText || (providerTurn?.phase === 'published' ? '' : providerTurn?.replyText) || (myListing ? ui(language, 'editGuide') : ui(language, 'startGuide'))) : turn?.replyText || ui(language, conversation.phase === 'awaiting_location' ? 'speakPlace' : 'speakNeed')
+  const textGuidance = editProposal?.replyText || (providerTurn?.phase === 'published' ? '' : providerTurn?.replyText) || (mode === 'find' ? turn?.replyText : '') || ui(language, 'typeInstead')
+  const guidance = !config ? ui(language, 'oneMoment') : !config.reasoningConfigured ? ui(language, 'voiceUnavailable') : recording ? ui(language, 'speakStop') : busy ? ui(language, 'pleaseWait') : voiceReady ? flowGuidance : textGuidance
   const locationLabel = placeOverride || conversation.location || ui(language, 'placeNeeded')
 
   useEffect(() => {
@@ -333,6 +342,19 @@ function App() {
   }, [mode, turn?.activeIndex, turn?.state.phase])
 
   if (new URLSearchParams(window.location.search).has('operator')) return <OperatorPanel />
+
+  if (showSplash) return <div className="splash" aria-label="EchoLang introduction">
+    <div className="splash-pattern" aria-hidden="true" />
+    <button className="splash-skip" type="button" onClick={() => { localStorage.setItem('echolang-intro-seen', '1'); setShowSplash(false) }}>Skip <ArrowRight size={17} /></button>
+    <div className="splash-content">
+      <div className="splash-emblem" aria-hidden="true"><span className="splash-emblem-core" /><span className="splash-wave wave-one" /><span className="splash-wave wave-two" /><span className="splash-wave wave-three" /></div>
+      <p className="splash-kicker">A LOCAL SERVICES DIRECTORY</p>
+      <div className="splash-wordmark">echo<span>lang.</span></div>
+      <h1>Every neighbourhood<br /><em>has a voice.</em></h1>
+      <div className="splash-languages" aria-hidden="true">{languages.map(item => <span key={item.code} lang={item.code.slice(0, 2)}>{item.native}</span>)}</div>
+    </div>
+    <div className="splash-progress" aria-hidden="true"><span /></div>
+  </div>
 
   if (showLanguagePicker) return <div className="app-shell language-welcome">
     <header className="topbar"><a className="brand" href="/" aria-label="EchoLang home"><span className="brand-mark" aria-hidden="true"><span /></span><span>echo<span className="brand-light">lang.</span></span></a></header>
@@ -369,7 +391,7 @@ function App() {
         <div className="intro-footer"><span className="tiny-star">✳</span><span>{ui(language, 'tagline')}</span></div>
       </section>
 
-      <section className="voice-panel" aria-label={ui(language, mode === 'find' ? 'findHelp' : 'offerService')}>
+      <section className={`voice-panel ${!voiceReady ? 'text-first' : ''}`} aria-label={ui(language, mode === 'find' ? 'findHelp' : 'offerService')}>
         <div className="mode-switch" role="group" aria-label={ui(language, 'chooseAction')}>
           <button type="button" className={mode === 'find' ? 'active' : ''} onClick={() => switchMode('find')}><Search size={17} /> {ui(language, 'findHelp')}</button>
           <button type="button" className={mode === 'offer' ? 'active' : ''} onClick={() => switchMode('offer')}><BriefcaseBusiness size={17} /> {ui(language, 'offerService')}</button>
@@ -410,7 +432,7 @@ function App() {
           <button className="new-search" type="button" onClick={reset}><RotateCcw size={16} /> {ui(language, 'newSearch')}</button>
         </div>}
 
-        {mode === 'offer' && !providerTurn && !myListing && <div className="offer-actions"><p>{ui(language, 'offerBegin')}</p><button type="button" className="result-main" disabled={busy || !voiceReady} onClick={() => void startProvider()}>{ui(language, 'startListing')} <ArrowRight size={19} /></button></div>}
+        {mode === 'offer' && !providerTurn && !myListing && <div className="offer-actions"><p>{ui(language, 'offerBegin')}</p><button type="button" className="result-main" disabled={busy || !config?.reasoningConfigured} onClick={() => void startProvider()}>{ui(language, 'startListing')} <ArrowRight size={19} /></button></div>}
         {mode === 'offer' && providerTurn?.phase === 'question' && <div className="offer-actions">
           <div className="results-heading"><span>{ui(language, 'detail', { index: Math.max(1, listingFields.indexOf(providerTurn.field || '') + 1) })}</span><Pencil size={16} /></div>
           <p>{ui(language, 'answerHint')}</p>
@@ -448,7 +470,7 @@ function App() {
             <button type="button" className="text-link" onClick={() => { setPlaceDraft(placeOverride); setShowPlace(!showPlace) }}>{ui(language, 'change')}</button>
           </div>}
           {mode === 'find' && showPlace && <div className="place-editor"><label htmlFor="place-input">{ui(language, 'cityLabel')}</label><div><input id="place-input" value={placeDraft} onChange={event => setPlaceDraft(event.target.value)} placeholder={ui(language, 'placePlaceholder')} /><button type="button" onClick={savePlace}>{ui(language, 'save')}</button></div></div>}
-          <button className="type-toggle" type="button" onClick={() => setShowType(!showType)}>{ui(language, showType ? 'hideText' : 'typeInstead')} <ArrowRight size={15} /></button>
+          {voiceReady && <button className="type-toggle" type="button" onClick={() => setShowType(!showType)}>{ui(language, showType ? 'hideText' : 'typeInstead')} <ArrowRight size={15} /></button>}
           {showType && mode === 'find' && <form className="type-form" onSubmit={event => { event.preventDefault(); if (typedText.trim() && !busy) { void sendTurn(typedText.trim()); setTypedText('') } }}><label htmlFor="type-input">{ui(language, 'requestLabel')}</label><div><input id="type-input" value={typedText} onChange={event => setTypedText(event.target.value)} placeholder={ui(language, 'requestPlaceholder')} /><button type="submit" disabled={busy || !typedText.trim()} aria-label={ui(language, 'sendRequest')}><ArrowRight size={19} /></button></div></form>}
           {showType && mode === 'offer' && (providerTurn?.draftId || myListing) && <form className="type-form" onSubmit={event => { event.preventDefault(); if (!providerInput.trim() || busy) return; if (editProposal?.field) void answerEdit(providerInput.trim()); else if (providerTurn?.draftId && providerTurn.phase !== 'published') void sendProvider(providerInput.trim()); else if (myListing) void prepareEdit(providerInput.trim()); setProviderInput('') }}><label htmlFor="provider-input">{ui(language, 'answerLabel')}</label><div><input id="provider-input" value={providerInput} onChange={event => setProviderInput(event.target.value)} placeholder={ui(language, 'answerPlaceholder')} /><button type="submit" disabled={busy || !providerInput.trim()} aria-label={ui(language, 'sendAnswer')}><ArrowRight size={19} /></button></div></form>}
         </div>
