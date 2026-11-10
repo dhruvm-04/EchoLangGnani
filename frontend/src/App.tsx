@@ -18,7 +18,14 @@ type Config = { languages: Language[]; sttModel: string; ttsModel: string; requi
 
 const emptyState: Conversation = { phase: 'new', category: null, location: null, language: null, availability: null, preferred_language: null, result_index: 0 }
 const listingFields = ['name', 'services', 'area', 'delivery', 'phone', 'hours', 'languages', 'price']
-const logoUrl = `${import.meta.env.BASE_URL}echolang-logo.svg`
+
+function LogoMark({ className = '' }: { className?: string }) {
+  return <svg className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <rect width="64" height="64" rx="16" fill="#24211f" />
+    <rect x="7" y="7" width="50" height="50" rx="12" stroke="#f5f2ec" strokeWidth="4" />
+    <rect x="21" y="21" width="22" height="22" rx="4" transform="rotate(45 32 32)" stroke="#f5f2ec" strokeWidth="4" />
+  </svg>
+}
 
 function friendlyError(language: string, code?: string): string {
   const messages: Record<string, CopyKey> = {
@@ -349,7 +356,7 @@ function App() {
 
   if (showSplash) return <div className="splash" aria-label="EchoLang introduction">
     <div className="splash-content">
-      <div className="splash-emblem" aria-hidden="true"><img src={logoUrl} alt="" /></div>
+      <div className="splash-emblem" aria-hidden="true"><LogoMark /></div>
       <p className="splash-kicker">A LOCAL SERVICES DIRECTORY</p>
       <div className="splash-wordmark">echo<span>lang.</span></div>
       <h1>Every neighbourhood<br /><em>has a voice.</em></h1>
@@ -359,7 +366,7 @@ function App() {
   </div>
 
   if (showLanguagePicker) return <div className="app-shell language-welcome">
-    <header className="topbar"><a className="brand" href={appHome} aria-label="EchoLang home"><img className="brand-mark" src={logoUrl} alt="" /><span>echo<span className="brand-light">lang.</span></span></a></header>
+    <header className="topbar"><a className="brand" href={appHome} aria-label="EchoLang home"><LogoMark className="brand-mark" /><span>echo<span className="brand-light">lang.</span></span></a></header>
     <main className="language-page">
       <div className="language-intro"><Globe2 size={30} aria-hidden="true" /><p className="eyebrow">ECHOLANG</p><h1>{ui(language, 'languageTitle')}</h1><p>{ui(language, 'languageIntro')}</p><small>{ui(language, 'languageHint')}</small></div>
       <div className="language-grid" role="group" aria-label="Choose the language for the app and voice">
@@ -374,7 +381,7 @@ function App() {
   return <div className="app-shell">
     <header className="topbar">
       <a className="brand" href={appHome} aria-label="EchoLang home" onClick={event => { event.preventDefault(); reset() }}>
-        <img className="brand-mark" src={logoUrl} alt="" /><span>echo<span className="brand-light">lang.</span></span>
+        <LogoMark className="brand-mark" /><span>echo<span className="brand-light">lang.</span></span>
       </a>
       <div className="top-actions">
         <button className="language-switch" type="button" disabled={recording || busy} onClick={() => setShowLanguagePicker(true)} aria-label={ui(language, 'changeLanguage')}><Globe2 size={17} aria-hidden="true" /> {languages.find(item => item.code === language)?.native}</button>
@@ -561,7 +568,7 @@ function OperatorPanel() {
     finally { setBusy(false) }
   }
 
-  return <div className="app-shell"><header className="topbar"><a className="brand" href={appHome}><img className="brand-mark" src={logoUrl} alt="" /><span>echo<span className="brand-light">lang.</span></span></a><span className="status-pill">Directory review</span></header>
+  return <div className="app-shell"><header className="topbar"><a className="brand" href={appHome}><LogoMark className="brand-mark" /><span>echo<span className="brand-light">lang.</span></span></a><span className="status-pill">Directory review</span></header>
     <main className="operator-page"><h1>Directory <em>review.</em></h1><p>Review new entries and customer reports.</p>
       <form onSubmit={event => { event.preventDefault(); void load() }}><label htmlFor="operator-key">Operator key</label><div><input id="operator-key" type="password" value={key} onChange={event => setKey(event.target.value)} autoComplete="off" /><button type="submit" disabled={!key || busy}>Load entries</button></div></form>
       {error && <p role="alert">{error}</p>}
